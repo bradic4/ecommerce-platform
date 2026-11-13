@@ -1,0 +1,120 @@
+@page
+@model Ecommerce.Admin.Pages.AuditModel
+@{
+    ViewData["Title"] = "Audit Log, Outbox i Anti-Fraud Evidencija";
+}
+
+<h1 class="h4 fw-bold mb-1">Audit Log, Outbox Red i Anti-Fraud Evidencija (Sekcije 16 &amp; 25.3)</h1>
+<p class="text-muted small mb-4">Neizmenjiv trag svih operaterskih i administrativnih akcija, status isporuke Outbox događaja i heširana evidencija nepreuzetih pošiljki.</p>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <h2 class="h6 fw-bold mb-2">1. AuditLog (Ko je, kada i šta promenio)</h2>
+        <div class="table-responsive bg-white rounded border shadow-sm">
+            <table class="table table-sm table-striped mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Vreme</th>
+                        <th>Akter</th>
+                        <th>Akcija</th>
+                        <th>Entitet</th>
+                        <th>Promena / Razlog</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.AuditLogs.Count == 0)
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-3">Nema zabeleženih AuditLog događaja.</td></tr>
+                    }
+                    @foreach (var a in Model.AuditLogs)
+                    {
+                        <tr>
+                            <td>@a.CreatedAt.ToString("dd.MM HH:mm:ss")</td>
+                            <td><span class="badge bg-secondary">@a.Actor</span></td>
+                            <td class="fw-bold">@a.Action</td>
+                            <td><code>@a.EntityType:@a.EntityId</code></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(a.BeforeSummary))
+                                {
+                                    <span class="text-muted">@a.BeforeSummary &rarr; </span>
+                                }
+                                <span>@a.AfterSummary</span>
+                                @if (!string.IsNullOrEmpty(a.Reason))
+                                {
+                                    <div class="text-muted fst-italic">Razlog: @a.Reason</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <h2 class="h6 fw-bold mb-2">2. Outbox Događaji (Email &amp; Next.js Cache Revalidation)</h2>
+        <div class="table-responsive bg-white rounded border shadow-sm mb-4">
+            <table class="table table-sm table-bordered mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Vreme</th>
+                        <th>Tip</th>
+                        <th>Pokušaji</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.OutboxMessages.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">Outbox je prazan.</td></tr>
+                    }
+                    @foreach (var m in Model.OutboxMessages)
+                    {
+                        <tr>
+                            <td>@m.CreatedAt.ToString("dd.MM HH:mm:ss")</td>
+                            <td class="fw-bold">@m.EventType</td>
+                            <td>@m.Attempts</td>
+                            <td>
+                                @if (m.ProcessedAt.HasValue)
+                                {
+                                    <span class="badge bg-success">Poslato</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">U redu (@(m.LastError ?? "čeka worker"))</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="h6 fw-bold mb-2">3. CustomerRiskRecord (SHA-256 Heš Nepreuzetih Pošiljki)</h2>
+        <div class="table-responsive bg-white rounded border shadow-sm">
+            <table class="table table-sm table-bordered mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Telefon SHA-256 (skraćeno)</th>
+                        <th>Nepreuzeto</th>
+                        <th>Napomena</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.RiskRecords.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-3">Nema evidentiranih nepreuzetih pošiljki.</td></tr>
+                    }
+                    @foreach (var r in Model.RiskRecords)
+                    {
+                        <tr>
+                            <td><code>@r.PhoneHash[..12]...</code></td>
+                            <td class="fw-bold text-danger">@r.UnclaimedCount x</td>
+                            <td>@r.Note</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

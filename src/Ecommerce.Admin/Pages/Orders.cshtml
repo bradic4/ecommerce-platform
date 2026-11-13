@@ -1,0 +1,243 @@
+@page
+@model Ecommerce.Admin.Pages.OrdersModel
+@{
+    ViewData["Title"] = "Porudžbine, Otprema i Otkupnine";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h4 fw-bold mb-1">Upravljanje Porudžbinama, Otpremom i Otkupninama (Sekcije 05, 12, 25.2)</h1>
+        <p class="text-muted small mb-0">Potvrda dostupnosti, izvoz CSV manifesta za kurire, PO narudžbenice dobavljaču i sravnjivanje otkupnina.</p>
+    </div>
+    <form method="post" asp-page-handler="ExportCourierManifest" class="d-flex gap-2 align-items-center bg-white p-2 rounded border shadow-sm">
+        <span class="small fw-bold">Izvoz za kurira:</span>
+        <select name="provider" class="form-select form-select-sm" style="width:140px;">
+            <option value="PostExpress">PostExpress CSV</option>
+            <option value="Bex">BEX Express CSV</option>
+            <option value="DExpress">D Express CSV</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-dark fw-semibold">Preuzmi CSV manifest</button>
+    </form>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small fw-semibold">@Model.StatusMessage</div>
+}
+
+<form method="get" class="row g-2 mb-4 bg-white p-3 rounded border shadow-sm">
+    <div class="col-md-5">
+        <input type="search" name="q" class="form-control form-control-sm" placeholder="Pretraga po broju porudžbine, imenu ili telefonu..." />
+    </div>
+    <div class="col-md-4">
+        <select name="statusFilter" class="form-select form-select-sm">
+            <option value="">Svi statusi</option>
+            <option value="New">New (Nove)</option>
+            <option value="AwaitingVerification">AwaitingVerification (Čekaju proveru rizika)</option>
+            <option value="Confirmed">Confirmed (Potvrđene / Poslate)</option>
+            <option value="Completed">Completed (Plaćene i završene)</option>
+            <option value="Cancelled">Cancelled (Otkazane / Nepreuzete)</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Filtriraj porudžbine</button>
+    </div>
+</form>
+
+@foreach (var o in Model.Orders)
+{
+    <div class="card mb-3 shadow-sm border-0">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="fw-bold fs-6">@o.OrderNumber</span>
+                <span class="badge bg-secondary ms-2">Order: @o.Status</span>
+                <span class="badge bg-info text-dark ms-1">Payment: @o.PaymentStatus</span>
+                <span class="badge bg-dark ms-1">Fulfillment: @o.FulfillmentStatus</span>
+            </div>
+            <div class="small text-muted">
+                Kreirano: @o.CreatedAt.ToString("dd.MM.yyyy HH:mm") | Ukupno: <strong class="text-dark">@o.TotalRsd.ToString("N2") RSD</strong>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(o.VerificationReason))
+            {
+                <div class="alert alert-warning py-1.5 px-3 small mb-3">
+                    <strong>Upozorenje za operatera (Sekcija 25.3):</strong> @o.VerificationReason
+                </div>
+            }
+
+            <div class="row g-3 small mb-3">
+                <div class="col-md-4">
+                    <strong>Kupac i kontakt:</strong><br />
+                    @o.CustomerFullName<br />
+                    Tel: <code>@o.CustomerPhoneE164</code> | @o.CustomerEmail
+                </div>
+                <div class="col-md-4">
+                    <strong>Adresa isporuke:</strong><br />
+                    @o.ShippingStreet<br />
+                    @o.ShippingPostalCode @o.ShippingCity
+                </div>
+                <div class="col-md-4">
+                    <strong>Stavke i izvor robe:</strong>
+                    <ul class="mb-0 ps-3">
+                        @foreach (var i in o.Items)
+                        {
+                            <li>@i.ProductNameSnapshot (@i.Quantity x @i.UnitPriceRsd.ToString("N0") RSD) — <span class="badge bg-light text-dark border">@i.FulfillmentSource</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-top pt-3 d-flex flex-wrap gap-3 align-items-end">
+                @if (o.Status == Ecommerce.Domain.Enums.OrderStatus.New || o.Status == Ecommerce.Domain.Enums.OrderStatus.AwaitingVerification)
+                {
+                    <form method="post" asp-page-handler="Confirm" class="d-inline">
+                        <input type="hidden" name="orderId" value="@o.Id" />
+                        <button type="submit" class="btn btn-sm btn-success">1. Potvrdi dostupnost</button>
+                    </form>
+                }
+
+                @if (o.Status != Ecommerce.Domain.Enums.OrderStatus.Cancelled)
+                {
+                    <form method="post" asp-page-handler="GenerateSupplierPo" class="d-inline">
+                        <input type="hidden" name="orderId" value="@o.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Kreiraj PO dobavljaču (Dropship/Cross-dock)</button>
+                    </form>
+                }
+
+                @if (o.Status != Ecommerce.Domain.Enums.OrderStatus.Cancelled && o.FulfillmentStatus != Ecommerce.Domain.Enums.FulfillmentStatus.Shipped && o.FulfillmentStatus != Ecommerce.Domain.Enums.FulfillmentStatus.Delivered)
+                {
+                    <form method="post" asp-page-handler="Ship" class="d-flex flex-wrap gap-1 align-items-center bg-light p-2 rounded border">
+                        <input type="hidden" name="orderId" value="@o.Id" />
+                        <input type="text" name="carrier" value="PostExpress" class="form-control form-control-sm" style="width:115px;" placeholder="Kurir" required />
+                        <input type="text" name="trackingNumber" class="form-control form-control-sm" style="width:140px;" placeholder="Tracking broj *" required />
+                        <input type="text" name="fiscalRef" class="form-control form-control-sm" style="width:140px;" placeholder="Fiskalni PFR br. *" required />
+                        <button type="submit" class="btn btn-sm btn-primary">2. Otpremi (Poslato)</button>
+                    </form>
+                }
+
+                @if (o.FulfillmentStatus == Ecommerce.Domain.Enums.FulfillmentStatus.Shipped && o.PaymentStatus != Ecommerce.Domain.Enums.PaymentStatus.Paid)
+                {
+                    <form method="post" asp-page-handler="Remittance" class="d-flex flex-wrap gap-1 align-items-center bg-light p-2 rounded border">
+                        <input type="hidden" name="orderId" value="@o.Id" />
+                        <input type="number" step="0.01" name="receivedAmountRsd" value="@o.TotalRsd" class="form-control form-control-sm" style="width:120px;" required />
+                        <input type="text" name="bankRef" value="IZVOD-BANKA-01" class="form-control form-control-sm" style="width:130px;" placeholder="Izvod banke" required />
+                        <button type="submit" class="btn btn-sm btn-teal text-white" style="background-color:#0f807f;">3. Evidentiraj uplatu otkupnine (COD)</button>
+                    </form>
+
+                    <form method="post" asp-page-handler="Unclaimed" class="d-flex gap-1 align-items-center">
+                        <input type="hidden" name="orderId" value="@o.Id" />
+                        <input type="hidden" name="returnCostRsd" value="750" />
+                        <button type="submit" class="btn btn-sm btn-outline-warning text-dark">Nepreuzeta pošiljka (vratio kurir)</button>
+                    </form>
+                }
+
+                @if (o.Status != Ecommerce.Domain.Enums.OrderStatus.Cancelled && o.Status != Ecommerce.Domain.Enums.OrderStatus.Completed)
+                {
+                    <form method="post" asp-page-handler="Cancel" class="d-flex gap-1 align-items-center ms-auto">
+                        <input type="hidden" name="orderId" value="@o.Id" />
+                        <input type="text" name="reason" placeholder="Razlog otkaza..." class="form-control form-control-sm" style="width:150px;" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Otkaži</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row g-4 mt-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Masovni uvoz CSV izvoda otkupnina kurira</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="ImportRemittanceCsv">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Kurirska služba</label>
+                        <input type="text" name="carrier" value="PostExpress" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">CSV redovi (Tracking;OrderNumber;OcekivanoRSD;UplacenoRSD;IzvodRef)</label>
+                        <textarea name="csvContent" rows="3" class="form-control form-control-sm font-monospace" placeholder="PE123456RS;ORD-20261113-0001;9490.00;9490.00;IZVOD-105"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold w-100">Uvezi i sravni otkupnine</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Narudžbenice dobavljačima (SupplierPurchaseOrder — Model B &amp; C)</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 small align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>PO Broj</th>
+                            <th>Porudžbina kupca</th>
+                            <th>Dobavljač / Model</th>
+                            <th>Nabavni iznos</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.SupplierPos.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">Nema kreiranih PO narudžbenica dobavljačima.</td>
+                            </tr>
+                        }
+                        @foreach (var po in Model.SupplierPos)
+                        {
+                            <tr>
+                                <td class="fw-bold">@po.PoNumber</td>
+                                <td><code>@po.CustomerOrderNumber</code></td>
+                                <td>@po.SupplierName <span class="badge bg-light text-dark border">@po.FulfillmentModel</span></td>
+                                <td class="fw-bold">@po.TotalEstimatedCostRsd.ToString("N2") RSD</td>
+                                <td><span class="badge bg-info text-dark">@po.Status</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 fw-bold mt-5 mb-3">Evidencija Otkupnina od Kurira (CodRemittance — Sekcija 25.2 / AT-18)</h2>
+<div class="table-responsive bg-white rounded border shadow-sm">
+    <table class="table table-sm table-bordered mb-0 align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Kurir</th>
+                <th>Očekivani iznos (RSD)</th>
+                <th>Uplaćeno na račun (RSD)</th>
+                <th>Referenca izvoda</th>
+                <th>Status uparivanja</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Remittances.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">Nema evidentiranih uplata otkupnina.</td>
+                </tr>
+            }
+            @foreach (var r in Model.Remittances)
+            {
+                <tr>
+                    <td>@r.Carrier</td>
+                    <td>@r.ExpectedAmountRsd.ToString("N2")</td>
+                    <td class="fw-bold">@r.ReceivedAmountRsd.ToString("N2")</td>
+                    <td><code>@r.BankReference</code></td>
+                    <td>
+                        <span class="badge @(r.Status == Ecommerce.Domain.Enums.CodRemittanceStatus.Matched ? "bg-success" : "bg-danger")">
+                            @r.Status
+                        </span>
+                    </td>
+                    <td class="small text-muted">@r.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

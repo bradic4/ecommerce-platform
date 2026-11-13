@@ -1,0 +1,153 @@
+@page
+@model Ecommerce.Admin.Pages.ReturnsModel
+@using Ecommerce.Domain.Enums
+@{
+    ViewData["Title"] = "Reklamacije & Odustanak od ugovora (RMA)";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-0">Reklamacije (24 meseca) &amp; Odustanak od ugovora (14 dana)</h2>
+        <p class="text-muted small mb-0">Zakon o zaštiti potrošača RS: obavezan odgovor kupcu u roku od <strong>8 dana</strong>, rešavanje u roku od <strong>15 dana</strong> (Section 15 &amp; 22).</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small">@Model.StatusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Ručni unos RMA zahteva (telefonski/email)</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="CreateManualRma">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Broj porudžbine</label>
+                        <input type="text" name="orderNumber" class="form-control form-control-sm" required placeholder="ORD-20261113-0001" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Ime i prezime kupca</label>
+                        <input type="text" name="customerFullName" class="form-control form-control-sm" required placeholder="Marko Petrović" />
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Telefon</label>
+                            <input type="text" name="customerPhone" class="form-control form-control-sm" required placeholder="0641234567" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Email</label>
+                            <input type="email" name="customerEmail" class="form-control form-control-sm" placeholder="kupac@primer.rs" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-8">
+                            <label class="form-label small fw-bold">SKU ili naziv artikla</label>
+                            <input type="text" name="productSkuOrName" class="form-control form-control-sm" required placeholder="INT-AKU-18V-01" />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Kol.</label>
+                            <input type="number" name="quantity" value="1" min="1" class="form-control form-control-sm" required />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-bold">Tip zahteva</label>
+                            <select name="type" class="form-select form-select-sm">
+                                <option value="@ReturnRequestType.Withdrawal14Days">Odustanak 14 dana</option>
+                                <option value="@ReturnRequestType.WarrantyClaim24Months">Reklamacija / Saobraznost (24m)</option>
+                                <option value="@ReturnRequestType.DamagedInTransit">Oštećenje u transportu</option>
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-bold">Iznos povrata (RSD)</label>
+                            <input type="number" step="10" name="estimatedRefundRsd" value="0" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Opis razloga / kvara</label>
+                        <textarea name="reasonDescription" rows="2" class="form-control form-control-sm" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold w-100">Zavedi u elektronsku evidenciju reklamacija</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Elektronska knjiga reklamacija i povrata (@Model.ReturnRequests.Count)</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>RMA / Porudžbina</th>
+                            <th>Kupac / Artikal</th>
+                            <th>Zakonski rokovi (8d / 15d)</th>
+                            <th>Status &amp; Obrada (Povrat na lager)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ReturnRequests.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Trenutno nema aktivnih reklamacija ni zahteva za odustanak.</td>
+                            </tr>
+                        }
+                        @foreach (var r in Model.ReturnRequests)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">@r.RmaNumber</div>
+                                    <code>@r.OrderNumber</code>
+                                    <div><span class="badge bg-light text-dark border">@r.Type</span></div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@r.CustomerFullName (@r.CustomerPhoneE164)</div>
+                                    <div>@r.Quantity x <code>@r.ProductSkuOrName</code></div>
+                                    <div class="text-muted">@r.ReasonDescription</div>
+                                </td>
+                                <td>
+                                    <div>Odgovor (8d): <strong>@r.StatutoryResponseDeadlineAt.ToString("dd.MM.yyyy.")</strong></div>
+                                    <div>Rešenje (15d): <strong>@r.StatutoryResolutionDeadlineAt.ToString("dd.MM.yyyy.")</strong></div>
+                                    @if (r.RespondedAt.HasValue)
+                                    {
+                                        <span class="badge bg-success">Odgovoreno: @r.RespondedAt.Value.ToString("dd.MM.")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Čeka odgovor</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form method="post" asp-page-handler="ProcessDecision" class="d-flex flex-column gap-1">
+                                        <input type="hidden" name="returnId" value="@r.Id" />
+                                        <div class="d-flex gap-1">
+                                            <select name="newStatus" class="form-select form-select-sm">
+                                                <option value="@ReturnRequestStatus.AcknowledgedWithin8Days" selected="@(r.Status == ReturnRequestStatus.AcknowledgedWithin8Days)">Odgovoreno u roku 8d</option>
+                                                <option value="@ReturnRequestStatus.ApprovedAwaitingReturn" selected="@(r.Status == ReturnRequestStatus.ApprovedAwaitingReturn)">Odobreno - čeka povrat</option>
+                                                <option value="@ReturnRequestStatus.ItemReceivedAndInspected" selected="@(r.Status == ReturnRequestStatus.ItemReceivedAndInspected)">Roba primljena</option>
+                                                <option value="@ReturnRequestStatus.Refunded" selected="@(r.Status == ReturnRequestStatus.Refunded)">Novac vraćen (Refund)</option>
+                                                <option value="@ReturnRequestStatus.Replaced" selected="@(r.Status == ReturnRequestStatus.Replaced)">Poslata zamena</option>
+                                                <option value="@ReturnRequestStatus.Rejected" selected="@(r.Status == ReturnRequestStatus.Rejected)">Odbijeno (uz obrazloženje)</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary">Snimi</button>
+                                        </div>
+                                        <input type="text" name="officialDecisionNote" value="@r.OfficialDecisionNote" class="form-control form-control-sm" placeholder="Zvaničan odgovor kupcu..." required />
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="restockToOwnInventory" value="true" id="restock-@r.Id" checked="@r.RestockedToOwnInventory" disabled="@r.RestockedToOwnInventory" />
+                                            <label class="form-check-label small" for="restock-@r.Id">
+                                                Vrati ispravan artikal na sopstveni magacin (+StockMovement)
+                                            </label>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

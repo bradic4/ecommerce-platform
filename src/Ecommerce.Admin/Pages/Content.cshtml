@@ -1,0 +1,146 @@
+@page
+@model Ecommerce.Admin.Pages.ContentModel
+@using Ecommerce.Domain.Enums
+@{
+    ViewData["Title"] = "Vodiči za kupovinu & SEO Sadržaj";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-0">Vodiči za kupovinu &amp; SEO Sadržaj (Section 14.3)</h2>
+        <p class="text-muted small mb-0">Upravljanje stručnim tekstovima (Draft &rarr; Review &rarr; Published) i automatsko povezivanje sa kategorijama i proizvodima.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small">@Model.StatusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Novi vodič za kupovinu</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Create">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Naslov vodiča (H1)</label>
+                        <input type="text" name="title" class="form-control form-control-sm" required placeholder="npr. Kako odabrati ugaonu brusilicu 125mm" />
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">URL Slug</label>
+                            <input type="text" name="slug" class="form-control form-control-sm" required placeholder="izbor-ugaone-brusilice-125mm" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Upit za ugradnju proizvoda</label>
+                            <input type="text" name="relatedQuery" class="form-control form-control-sm" placeholder="brusilica" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Slug kategorije</label>
+                            <input type="text" name="categorySlug" class="form-control form-control-sm" value="aku-i-elektricni-alati" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Naziv kategorije</label>
+                            <input type="text" name="categoryName" class="form-control form-control-sm" value="Aku i električni alati" />
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Kratak uvod (Excerpt)</label>
+                        <textarea name="excerpt" rows="2" class="form-control form-control-sm" required></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Sadržaj (Markdown)</label>
+                        <textarea name="bodyMarkdown" rows="4" class="form-control form-control-sm" required></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">SEO Title (opciono)</label>
+                        <input type="text" name="seoTitle" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">SEO Meta Description (opciono)</label>
+                        <textarea name="seoDescription" rows="2" class="form-control form-control-sm"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold w-100">Sačuvaj kao Draft</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Postojeći vodiči (@Model.Articles.Count)</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Naslov / Slug</th>
+                            <th>Kategorija / Upit</th>
+                            <th>Status</th>
+                            <th>Promena statusa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model.Articles)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">@a.Title</div>
+                                    <code class="text-muted">/vodici/@a.Slug</code>
+                                </td>
+                                <td>
+                                    <div>@a.CategoryName</div>
+                                    <span class="badge bg-light text-dark border">Upit: @a.RelatedQuery</span>
+                                </td>
+                                <td>
+                                    @if (a.Status == ArticleStatus.Published)
+                                    {
+                                        <span class="badge bg-success">Published</span>
+                                    }
+                                    else if (a.Status == ArticleStatus.Review)
+                                    {
+                                        <span class="badge bg-warning text-dark">Review</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Draft</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        @if (a.Status != ArticleStatus.Review)
+                                        {
+                                            <form method="post" asp-page-handler="ChangeStatus">
+                                                <input type="hidden" name="articleId" value="@a.Id" />
+                                                <input type="hidden" name="newStatus" value="@ArticleStatus.Review" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0">U Review</button>
+                                            </form>
+                                        }
+                                        @if (a.Status != ArticleStatus.Published)
+                                        {
+                                            <form method="post" asp-page-handler="ChangeStatus">
+                                                <input type="hidden" name="articleId" value="@a.Id" />
+                                                <input type="hidden" name="newStatus" value="@ArticleStatus.Published" />
+                                                <button type="submit" class="btn btn-sm btn-success py-0">Objavi</button>
+                                            </form>
+                                        }
+                                        @if (a.Status != ArticleStatus.Draft)
+                                        {
+                                            <form method="post" asp-page-handler="ChangeStatus">
+                                                <input type="hidden" name="articleId" value="@a.Id" />
+                                                <input type="hidden" name="newStatus" value="@ArticleStatus.Draft" />
+                                                <button type="submit" class="btn btn-sm btn-outline-warning py-0">U Draft</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

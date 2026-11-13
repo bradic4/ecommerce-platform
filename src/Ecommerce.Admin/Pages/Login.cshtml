@@ -1,0 +1,54 @@
+@page
+@model Ecommerce.Admin.Pages.LoginModel
+@{
+    ViewData["Title"] = "RBAC Uloge & TOTP MFA (Section 16.1 & 25.5)";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                <span>Kontrola pristupa (RBAC) &amp; Dvofaktorska autentifikacija (TOTP MFA)</span>
+                <span class="badge bg-dark">AT-08 / AT-21</span>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.StatusMessage))
+                {
+                    <div class="alert alert-info py-2 small">@Model.StatusMessage</div>
+                }
+
+                <div class="mb-3 p-3 rounded bg-light border small">
+                    <div class="d-flex justify-content-between">
+                        <span>Trenutna uloga u sesiji: <strong>@Model.CurrentRole</strong></span>
+                        <span>MFA status: <strong>@(Model.MfaVerified ? "Verifikovan (TOTP)" : "Nije verifikovan")</strong></span>
+                    </div>
+                    <hr class="my-2" />
+                    <div class="text-muted">
+                        Trenutni 30-sekundni TOTP kod (RFC 6238 za testiranje): <code class="fw-bold fs-6 text-dark">@Model.DemoTotpCode</code>
+                    </div>
+                </div>
+
+                <form method="post" asp-page-handler="SwitchRole">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Izaberite ulogu</label>
+                        <select name="role" class="form-select form-select-sm">
+                            <option value="OwnerAdmin" selected="@(Model.CurrentRole == "OwnerAdmin")">
+                                OwnerAdmin — Puni pristup (Dobavljači, Cene &amp; Marže, Audit, Zalihe, Porudžbine)
+                            </option>
+                            <option value="Operator" selected="@(Model.CurrentRole == "Operator")">
+                                Operator — Operativni pristup (Samo Porudžbine, Zalihe i Sadržaj; bez pristupa maržama i dobavljačima)
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">6-cifreni TOTP MFA kod (obavezan za OwnerAdmin)</label>
+                        <input type="text" name="totpCode" value="@Model.DemoTotpCode" class="form-control form-control-sm" placeholder="Unesite 6-cifreni kod" />
+                    </div>
+
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold">Primeni ulogu i verifikuj sesiju</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

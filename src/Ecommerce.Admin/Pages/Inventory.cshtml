@@ -1,0 +1,117 @@
+@page
+@model Ecommerce.Admin.Pages.InventoryModel
+@{
+    ViewData["Title"] = "Zalihe i SEO 301 Redirekcije";
+}
+
+<h1 class="h4 fw-bold mb-1">Zalihe (Own Stock Ledger) i SEO 301 Redirect Manager (Sekcije 11 &amp; 14.2)</h1>
+<p class="text-muted small mb-3">Ručna korekcija sopstvenog magacina uz obavezno obrazloženje i promena URL sluga bez gubitka SEO autoriteta.</p>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small fw-semibold">@Model.StatusMessage</div>
+}
+
+<div class="table-responsive bg-white rounded border shadow-sm mb-5">
+    <table class="table table-sm table-bordered mb-0 small align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>SKU</th>
+                <th>Proizvod &amp; Aktuelni URL Slug</th>
+                <th>Fizički / Rez. / Slobodno</th>
+                <th>Ručna korekcija sopstvenog lagera</th>
+                <th>Promena URL Sluga (auto 301)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td><code>@item.Variant.InternalSku</code></td>
+                    <td>
+                        <div class="fw-bold">@item.Product.Name</div>
+                        <code class="text-muted">/proizvod/@item.Product.Slug</code>
+                    </td>
+                    <td>
+                        <strong>@item.Availability.OwnPhysicalStock</strong> fiz. /
+                        <span class="text-warning">@item.Availability.ActiveReservedStock rez.</span> /
+                        <span class="text-success fw-bold">@item.Availability.OwnSellableQty slob.</span>
+                    </td>
+                    <td>
+                        <form method="post" asp-page-handler="AdjustStock" class="d-flex gap-1">
+                            <input type="hidden" name="variantId" value="@item.Variant.Id" />
+                            <input type="number" name="delta" value="1" class="form-control form-control-sm" style="width:70px;" required />
+                            <input type="text" name="reason" placeholder="Razlog korekcije *" class="form-control form-control-sm" required />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Koriguj</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" asp-page-handler="RenameSlug" class="d-flex gap-1">
+                            <input type="hidden" name="productId" value="@item.Product.Id" />
+                            <input type="text" name="newSlug" value="@item.Product.Slug" class="form-control form-control-sm" required />
+                            <button type="submit" class="btn btn-sm btn-outline-dark">Promeni (301)</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <h2 class="h6 fw-bold mb-2">Poslednje Promene u StockMovement Ledger-u</h2>
+        <div class="table-responsive bg-white rounded border shadow-sm">
+            <table class="table table-sm table-striped mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Vreme</th>
+                        <th>Promena</th>
+                        <th>Razlog</th>
+                        <th>Akter</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.RecentMovements)
+                    {
+                        <tr>
+                            <td>@m.CreatedAt.ToString("dd.MM HH:mm")</td>
+                            <td class="fw-bold @(m.QuantityDelta >= 0 ? "text-success" : "text-danger")">@m.QuantityDelta.ToString("+#;-#;0")</td>
+                            <td>@m.Reason</td>
+                            <td>@m.Actor</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h2 class="h6 fw-bold mb-2">Aktivne 301 Redirekcije (RedirectRule — AT-11)</h2>
+        <div class="table-responsive bg-white rounded border shadow-sm">
+            <table class="table table-sm table-striped mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Stara putanja (OldPath)</th>
+                        <th>Nova putanja (NewPath)</th>
+                        <th>HTTP Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.RedirectRules.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-center text-muted py-3">Nema aktivnih 301 preusmerenja.</td></tr>
+                    }
+                    @foreach (var r in Model.RedirectRules)
+                    {
+                        <tr>
+                            <td><code>@r.OldPath</code></td>
+                            <td><code>@r.NewPath</code></td>
+                            <td><span class="badge bg-success">@r.StatusCode</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

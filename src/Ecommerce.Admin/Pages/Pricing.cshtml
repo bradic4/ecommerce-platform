@@ -1,0 +1,123 @@
+@page
+@model Ecommerce.Admin.Pages.PricingModel
+@{
+    ViewData["Title"] = "Cene, Marža i Profitabilnost";
+}
+
+<h1 class="h4 fw-bold mb-1">Pricing Engine — Pravila Cene, Markup vs. Bruto Marža i COD Rizik (Sekcija 10 &amp; 25.2)</h1>
+<p class="text-muted small mb-4">Simulacija cena pre objave, zaštitni prag minimalne zarade (profitability floor) i faktor troška nepreuzetih pošiljki.</p>
+
+@if (!string.IsNullOrEmpty(Model.StatusBanner))
+{
+    <div class="alert alert-success py-2 small fw-semibold">@Model.StatusBanner</div>
+}
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white fw-bold small">1. Parametri Globalnog Pravila Cene</div>
+    <div class="card-body">
+        <form method="post" class="row g-3 align-items-end small">
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Koeficijent (Markup)</label>
+                <input asp-for="MarkupMultiplier" type="number" step="0.01" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Manipulativni trošak (RSD)</label>
+                <input asp-for="FixedHandlingFeeRsd" type="number" step="10" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Min. Bruto Marža (%)</label>
+                <input asp-for="MinGrossMarginPercent" type="number" step="0.5" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Min. Doprinos (RSD)</label>
+                <input asp-for="MinProfitFloorRsd" type="number" step="50" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Stopa nepreuzimanja (0-1)</label>
+                <input asp-for="ExpectedUnclaimedRate" type="number" step="0.01" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">2-smerna poštarina (RSD)</label>
+                <input asp-for="EstimatedTwoWayShippingCostRsd" type="number" step="50" class="form-control form-control-sm" />
+            </div>
+            <div class="col-12 d-flex justify-content-between align-items-center pt-2 border-top">
+                <div class="form-check">
+                    <input asp-for="RoundToWholeTenRsd" class="form-check-input" type="checkbox" />
+                    <label asp-for="RoundToWholeTenRsd" class="form-check-label fw-semibold">Zaokruži na celih 10 RSD</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" asp-page-handler="Simulate" class="btn btn-sm btn-outline-primary fw-bold">
+                        Simuliraj cene (Bez objave)
+                    </button>
+                    <button type="submit" asp-page-handler="Apply" class="btn btn-sm btn-success fw-bold">
+                        Primeni pravilo i osveži katalog
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h2 class="h5 fw-bold mb-3">2. Pregled Proračuna po Artiklima (Markup vs. Bruto Marža)</h2>
+<div class="table-responsive bg-white rounded border shadow-sm mb-5">
+    <table class="table table-sm table-bordered mb-0 small align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>SKU</th>
+                <th>Proizvod</th>
+                <th>Nabavna (RSD)</th>
+                <th>Trenutna (RSD)</th>
+                <th>Simulirana (RSD)</th>
+                <th>Markup %</th>
+                <th>Bruto Marža %</th>
+                <th>Čist doprinos (RSD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.SimulationRows)
+            {
+                <tr class="@(r.IsBelowFloor ? "table-danger" : "")">
+                    <td><code>@r.InternalSku</code></td>
+                    <td class="fw-semibold">@r.ProductName</td>
+                    <td>@r.CostRsd.ToString("N2")</td>
+                    <td>@r.CurrentSellingPriceRsd.ToString("N2")</td>
+                    <td class="fw-bold text-primary">@r.SimulatedSellingPriceRsd.ToString("N2")</td>
+                    <td>@r.MarkupPercent.ToString("N1")%</td>
+                    <td class="fw-semibold">@r.GrossMarginPercent.ToString("N1")%</td>
+                    <td class="fw-bold text-success">@r.NetContributionRsd.ToString("N0") RSD</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<h2 class="h5 fw-bold mb-3">3. Istorija Promena Prodajnih Cena (PriceRecord)</h2>
+<div class="table-responsive bg-white rounded border shadow-sm">
+    <table class="table table-sm table-striped mb-0 small">
+        <thead class="table-dark">
+            <tr>
+                <th>Vreme</th>
+                <th>Stara cena</th>
+                <th>Nova cena</th>
+                <th>Markup / Bruto marža</th>
+                <th>Primenjeno pravilo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.RecentPriceRecords.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-3">Još nema zabeleženih promena prodajnih cena.</td></tr>
+            }
+            @foreach (var p in Model.RecentPriceRecords)
+            {
+                <tr>
+                    <td>@p.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@p.OldSellingPriceRsd.ToString("N2") RSD</td>
+                    <td class="fw-bold">@p.NewSellingPriceRsd.ToString("N2") RSD</td>
+                    <td>@p.MarkupPercent.ToString("N1")% / @p.GrossMarginPercent.ToString("N1")%</td>
+                    <td class="text-muted">@p.RuleDescription</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

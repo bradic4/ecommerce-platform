@@ -1,0 +1,125 @@
+@page
+@model Ecommerce.Admin.Pages.CouponsModel
+@{
+    ViewData["Title"] = "Promo Kodovi & Zaštita Marže";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-0">Promo Kodovi sa automatskom zaštitom minimalne marže (Section 10 &amp; 23)</h2>
+        <p class="text-muted small mb-0">Svaki kupon sa uključenom opcijom <code>ProtectMinimumMarginFloor</code> automatski ograničava popust tako da porudžbina nikada ne uđe u negativnu zaradu.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small">@Model.StatusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Kreiraj novi promo kod</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Create">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Kod kupona (npr. PROLECE15)</label>
+                        <input type="text" name="code" class="form-control form-control-sm text-uppercase" required placeholder="PROLECE15" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Opis akcije</label>
+                        <input type="text" name="description" class="form-control form-control-sm" required placeholder="Sezonski popust na opremu za dvorište" />
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Popust (%)</label>
+                            <input type="number" step="1" name="discountPercent" value="10" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Fiksni popust (RSD)</label>
+                            <input type="number" step="50" name="fixedDiscountRsd" value="0" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Min. korpa (RSD)</label>
+                            <input type="number" step="500" name="minSubtotalRsd" value="3000" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Maks. iskorišćenja</label>
+                            <input type="number" name="maxUses" value="200" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="protectMinimumMarginFloor" value="true" id="marginGuard" checked />
+                        <label class="form-check-label small fw-semibold" for="marginGuard">
+                            Zaštiti minimalni prag zarade (spreči prodaju ispod nabavne cene + 350 RSD)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold w-100">Sačuvaj promo kod</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Aktivni i arhivirani promo kodovi (@Model.Coupons.Count)</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Kod / Opis</th>
+                            <th>Popust</th>
+                            <th>Min. Korpa</th>
+                            <th>Zaštita marže</th>
+                            <th>Iskorišćeno</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Coupons)
+                        {
+                            <tr>
+                                <td>
+                                    <code class="fw-bold fs-6">@c.Code</code>
+                                    <div class="text-muted">@c.Description</div>
+                                </td>
+                                <td class="fw-bold">
+                                    @if (c.DiscountPercent > 0)
+                                    {
+                                        <span>-@c.DiscountPercent% </span>
+                                    }
+                                    @if (c.FixedDiscountRsd > 0)
+                                    {
+                                        <span>-@c.FixedDiscountRsd.ToString("N0") RSD</span>
+                                    }
+                                </td>
+                                <td>@c.MinSubtotalRsd.ToString("N0") RSD</td>
+                                <td>
+                                    @if (c.ProtectMinimumMarginFloor)
+                                    {
+                                        <span class="badge bg-success">Uključena</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Isključena</span>
+                                    }
+                                </td>
+                                <td>@c.CurrentUses / @c.MaxUses</td>
+                                <td>
+                                    <form method="post" asp-page-handler="Toggle">
+                                        <input type="hidden" name="couponId" value="@c.Id" />
+                                        <button type="submit" class="btn btn-sm @(c.IsActive ? "btn-outline-danger" : "btn-outline-success") py-0">
+                                            @(c.IsActive ? "Deaktiviraj" : "Aktiviraj")
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

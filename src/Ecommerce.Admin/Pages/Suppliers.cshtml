@@ -1,0 +1,157 @@
+@page
+@model Ecommerce.Admin.Pages.SuppliersModel
+@{
+    ViewData["Title"] = "Dobavljači i Import Pipeline";
+}
+
+<h1 class="h4 fw-bold mb-1">Dobavljači, Mapiranje i Import Pipeline (Sekcije 08, 09, 25.2)</h1>
+<p class="text-muted small mb-4">Dry-Run pregled diffa, zaštita od pogrešnih decimala (1232.0000), masovnog brisanja (&gt;20%) i naglih skokova cena (&gt;30%).</p>
+
+@if (Model.LastPreview is not null)
+{
+    <div class="card mb-4 border-primary shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between">
+            <span>Rezultat @(Model.LastPreview.IsDryRun ? "DRY-RUN Simulacije (bez izmene kataloga)" : "PRIMENJENOG UVOZA (Apply)")</span>
+            <span class="badge bg-light text-dark">Status: @Model.LastPreview.Status</span>
+        </div>
+        <div class="card-body small">
+            @if (!string.IsNullOrEmpty(Model.LastPreview.SafetyBlockReason))
+            {
+                <div class="alert alert-danger fw-bold mb-3">@Model.LastPreview.SafetyBlockReason</div>
+            }
+            <div class="row text-center mb-2">
+                <div class="col">Ukupno redova: <strong>@Model.LastPreview.TotalRows</strong></div>
+                <div class="col text-success">Novih ponuda: <strong>@Model.LastPreview.AddedCount</strong></div>
+                <div class="col text-primary">Ažuriranih: <strong>@Model.LastPreview.UpdatedCount</strong></div>
+                <div class="col text-warning">Za ručni review: <strong>@Model.LastPreview.NeedsManualReviewCount</strong></div>
+                <div class="col text-danger">Karantin (greške): <strong>@Model.LastPreview.QuarantinedRows.Count</strong></div>
+            </div>
+            @if (Model.LastPreview.QuarantinedRows.Count > 0)
+            {
+                <div class="mt-2 border-top pt-2">
+                    <strong class="text-danger">Redovi u karantinu:</strong>
+                    <ul class="mb-0">
+                        @foreach (var q in Model.LastPreview.QuarantinedRows)
+                        {
+                            <li><code>@q.SupplierSku</code>: @q.Reason</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="row g-4 mb-5">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-dark text-white fw-bold small">1. Pokreni CSV / XML Import (Dry-Run ili Safe Apply)</div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Dobavljač</label>
+                            <select asp-for="SelectedSupplierId" class="form-select form-select-sm">
+                                @foreach (var s in Model.Suppliers)
+                                {
+                                    <option value="@s.Id">@s.Name (@s.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Format</label>
+                            <select asp-for="FeedFormat" class="form-select form-select-sm">
+                                <option value="CSV">CSV (;)</option>
+                                <option value="XML">XML</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check small">
+                                <input asp-for="IsDeltaFeed" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsDeltaFeed" class="form-check-label fw-semibold">Delta feed</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Sadržaj feeda (CSV ili XML)</label>
+                        <textarea asp-for="RawFeedText" rows="6" class="form-control form-control-sm font-monospace"></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" asp-page-handler="DryRun" class="btn btn-sm btn-outline-primary fw-bold">
+                            1. Dry-Run (Pregledaj Diff bez izmene)
+                        </button>
+                        <button type="submit" asp-page-handler="Apply" class="btn btn-sm btn-success fw-bold">
+                            2. Safe Apply (Primeni uz zaštitne pragove)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-dark text-white fw-bold small">2. Istorija ImportRun izvršavanja</div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0 small align-middle">
+                    <thead>
+                        <tr>
+                            <th>Vreme</th>
+                            <th>Režim</th>
+                            <th>Status</th>
+                            <th> + / ~ / ! </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentRuns.Count == 0)
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-3">Još nema izvršenih importa.</td></tr>
+                        }
+                        @foreach (var run in Model.RecentRuns)
+                        {
+                            <tr>
+                                <td>@run.CreatedAt.ToString("dd.MM HH:mm:ss")</td>
+                                <td>@(run.IsDryRun ? "Dry-Run" : "APPLY") (@(run.IsDeltaFeed ? "Delta" : "Full"))</td>
+                                <td><span class="badge bg-secondary">@run.Status</span></td>
+                                <td>+@run.AddedCount / ~@run.UpdatedCount / !@run.QuarantinedCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 fw-bold mb-3">Kanonska Mapa Ponuda Dobavljača (SupplierOffer — UNIQUE(SupplierId, SupplierSku))</h2>
+<div class="table-responsive bg-white rounded border shadow-sm">
+    <table class="table table-sm table-bordered mb-0 small align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Dobavljač</th>
+                <th>Dobavljački SKU</th>
+                <th>Naziv kod dobavljača</th>
+                <th>Povezani Kanonski SKU</th>
+                <th>Nabavna cena (RSD)</th>
+                <th>Prijavljeno stanje</th>
+                <th>Review status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model.Offers)
+            {
+                <tr class="@(o.NeedsManualReview ? "table-warning" : "")">
+                    <td class="fw-semibold">@o.Supplier?.Name</td>
+                    <td><code>@o.SupplierSku</code></td>
+                    <td>@o.SupplierProductName</td>
+                    <td><code>@(o.Variant?.InternalSku ?? "NEPOVEZAN (Draft)")</code></td>
+                    <td class="fw-bold">@o.PurchasePrice.ToString("N2") RSD</td>
+                    <td>@o.SupplierReportedQty kom</td>
+                    <td>@(o.NeedsManualReview ? o.ReviewReason : "OK (Odobreno)")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

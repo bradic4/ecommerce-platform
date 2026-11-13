@@ -1,0 +1,130 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Operativni Radni Centar (Admin)";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <span class="badge bg-teal text-uppercase mb-1" style="background-color:#0f807f;">Porodična Prodavnica v1.1</span>
+            <h1 class="h3 fw-bold mb-0">Operativni Radni Centar — Porudžbine, Zalihe i Dobavljači</h1>
+        </div>
+        <div class="text-end text-muted small">
+            ASP.NET Core Razor Pages (In-Process Application Layer)
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold">NOVE PORUDŽBINE</div>
+                    <div class="fs-2 fw-bold text-primary">@Model.NewOrdersCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold">ČEKAJU PROVERU (RIZIK / VERIFIKACIJA)</div>
+                    <div class="fs-2 fw-bold text-warning">@Model.VerificationOrdersCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold">OBJAVLJENI ARTIKLI</div>
+                    <div class="fs-2 fw-bold text-success">@Model.PublishedProductsCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold">PONUDE DOBAVLJAČA U REVIEW-U</div>
+                    <div class="fs-2 fw-bold text-danger">@Model.SupplierOffersReviewCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h5 fw-bold mb-3">1. Lista Porudžbina (Admin Orders)</h2>
+    <div class="table-responsive mb-5">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Broj</th>
+                    <th>Kupac / Telefon</th>
+                    <th>Grad i Pošt. broj</th>
+                    <th>Iznos (RSD)</th>
+                    <th>Status Porudžbine</th>
+                    <th>Status Plaćanja</th>
+                    <th>Napomena za operatera</th>
+                    <th>Akcija</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.RecentOrders.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-3">Trenutno nema primljenih porudžbina.</td>
+                    </tr>
+                }
+                @foreach (var o in Model.RecentOrders)
+                {
+                    <tr>
+                        <td class="fw-bold">@o.OrderNumber</td>
+                        <td>@o.CustomerFullName<br /><small class="text-muted">@o.CustomerPhoneE164</small></td>
+                        <td>@o.ShippingCity (@o.ShippingPostalCode)</td>
+                        <td class="fw-semibold">@o.TotalRsd.ToString("N2") RSD</td>
+                        <td><span class="badge bg-secondary">@o.Status</span></td>
+                        <td><span class="badge bg-info text-dark">@o.PaymentStatus</span></td>
+                        <td class="small text-danger">@(o.VerificationReason ?? "Bez upozorenja")</td>
+                        <td>
+                            @if (o.Status == Ecommerce.Domain.Enums.OrderStatus.New || o.Status == Ecommerce.Domain.Enums.OrderStatus.AwaitingVerification)
+                            {
+                                <form method="post" asp-page-handler="ConfirmOrder" class="d-inline">
+                                    <input type="hidden" name="orderId" value="@o.Id" />
+                                    <button type="submit" class="btn btn-sm btn-success">Potvrdi za slanje</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="h5 fw-bold mb-3">2. Hibridni Lager, Cene i Izvor Isporuke (Own Stock vs. Dobavljači)</h2>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Interni SKU</th>
+                    <th>Naziv Proizvoda</th>
+                    <th>Nabavna (RSD)</th>
+                    <th>Prodajna (RSD)</th>
+                    <th>Vlastiti Lager (Slobodno / Rez.)</th>
+                    <th>Najpovoljniji Dobavljač</th>
+                    <th>Izvor Isporuke</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.CatalogStockOverview)
+                {
+                    <tr>
+                        <td><code>@row.Variant.InternalSku</code></td>
+                        <td class="fw-semibold">@row.ProductName</td>
+                        <td>@row.Variant.CurrentCostPriceRsd.ToString("N2")</td>
+                        <td class="fw-bold text-primary">@row.Variant.CurrentSellingPriceRsd.ToString("N2")</td>
+                        <td>@row.Availability.OwnSellableQty slobodno <small class="text-muted">(rezervisano: @row.Availability.ActiveReservedStock)</small></td>
+                        <td>@(row.Availability.BestSupplierName ?? "-") (@row.Availability.BestSupplierSellableQty kom)</td>
+                        <td><span class="badge bg-dark">@row.Availability.FulfillmentSource</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

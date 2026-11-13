@@ -1,0 +1,147 @@
+@page
+@model Ecommerce.Admin.Pages.CatalogModel
+@using Ecommerce.Domain.Enums
+@{
+    ViewData["Title"] = "Upravljanje Katalogom (PIM & SEO)";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-0">Upravljanje Katalogom, Specifikacijama i SEO Poljima (Section 07 &amp; 14.3)</h2>
+        <p class="text-muted small mb-0">Dodavanje novih artikala, ručni override cena, status vidljivosti i automatska srpska pretraživa normalizacija.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small">@Model.StatusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Dodaj novi proizvod u katalog</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="CreateProduct">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Naziv proizvoda</label>
+                        <input type="text" name="name" class="form-control form-control-sm" required placeholder="npr. Laserski daljinomer 50m IP54" />
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">URL Slug</label>
+                            <input type="text" name="slug" class="form-control form-control-sm" required placeholder="laserski-daljinomer-50m" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Interni SKU</label>
+                            <input type="text" name="internalSku" class="form-control form-control-sm" required placeholder="INT-LAS-50M" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Kategorija</label>
+                            <select name="categoryId" class="form-select form-select-sm">
+                                @foreach (var c in Model.Categories)
+                                {
+                                    <option value="@c.Id">@c.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Brend</label>
+                            <select name="brandId" class="form-select form-select-sm">
+                                @foreach (var b in Model.Brands)
+                                {
+                                    <option value="@b.Id">@b.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Nabavna (RSD)</label>
+                            <input type="number" step="0.01" name="costPriceRsd" class="form-control form-control-sm" value="2500" required />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Prodajna (RSD)</label>
+                            <input type="number" step="0.01" name="sellingPriceRsd" class="form-control form-control-sm" value="3790" required />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">EAN (8-14 cif.)</label>
+                            <input type="text" name="gtinEan" class="form-control form-control-sm" placeholder="8606019991112" />
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Tehnička specifikacija (za karticu i JSON-LD)</label>
+                        <textarea name="shortSpecification" rows="2" class="form-control form-control-sm" required placeholder="Domet: 0.05-50m | Tačnost: ±1.5mm | Zaštita: IP54"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">SEO Title (opciono)</label>
+                        <input type="text" name="seoTitle" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">SEO Meta Description (opciono)</label>
+                        <textarea name="seoDescription" rows="2" class="form-control form-control-sm"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold w-100">Kreiraj i objavi proizvod</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Katalog proizvoda (@Model.Products.Count)</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Proizvod / SKU / EAN</th>
+                            <th>Kategorija / Specifikacija</th>
+                            <th>Nabavna / Prodajna (RSD)</th>
+                            <th>Brza izmena (Cena, Status, SEO)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Products)
+                        {
+                            var v = p.Variants.FirstOrDefault();
+                            if (v is null) continue;
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">@p.Name</div>
+                                    <div><code>@v.InternalSku</code> | EAN: @(v.GtinEan ?? "-")</div>
+                                    <div class="text-muted">/proizvod/@p.Slug</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@(p.Category?.Name ?? "-")</span>
+                                    <div class="text-muted mt-1">@p.ShortSpecification</div>
+                                </td>
+                                <td>
+                                    <div class="text-muted">Nabavna: @v.CurrentCostPriceRsd.ToString("N0") RSD</div>
+                                    <div class="fw-bold text-dark">Prodajna: @v.CurrentSellingPriceRsd.ToString("N0") RSD</div>
+                                </td>
+                                <td>
+                                    <form method="post" asp-page-handler="UpdateVariantPriceAndStatus" class="d-flex flex-column gap-1">
+                                        <input type="hidden" name="productId" value="@p.Id" />
+                                        <input type="hidden" name="variantId" value="@v.Id" />
+                                        <div class="d-flex gap-1">
+                                            <input type="number" step="10" name="newSellingPriceRsd" value="@v.CurrentSellingPriceRsd.ToString("0")" class="form-control form-control-sm" style="width:105px;" />
+                                            <select name="newStatus" class="form-select form-select-sm" style="width:115px;">
+                                                <option value="Published" selected="@(p.Status == ProductStatus.Published)">Published</option>
+                                                <option value="Draft" selected="@(p.Status == ProductStatus.Draft)">Draft</option>
+                                                <option value="Archived" selected="@(p.Status == ProductStatus.Archived)">Archived</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Sačuvaj</button>
+                                        </div>
+                                        <input type="text" name="seoTitle" value="@p.SeoTitle" class="form-control form-control-sm" placeholder="SEO Title..." />
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
