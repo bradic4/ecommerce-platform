@@ -54,8 +54,11 @@
                 <span class="badge bg-info text-dark ms-1">Payment: @o.PaymentStatus</span>
                 <span class="badge bg-dark ms-1">Fulfillment: @o.FulfillmentStatus</span>
             </div>
-            <div class="small text-muted">
-                Kreirano: @o.CreatedAt.ToString("dd.MM.yyyy HH:mm") | Ukupno: <strong class="text-dark">@o.TotalRsd.ToString("N2") RSD</strong>
+            <div class="small text-muted d-flex align-items-center gap-2">
+                <span>Kreirano: @o.CreatedAt.ToString("dd.MM.yyyy HH:mm") | Ukupno: <strong class="text-dark">@o.TotalRsd.ToString("N2") RSD</strong></span>
+                <a asp-page="/OrderPrint" asp-route-orderId="@o.Id" class="btn btn-sm btn-outline-dark py-0">
+                    Štampaj otpremnicu (14d)
+                </a>
             </div>
         </div>
         <div class="card-body">

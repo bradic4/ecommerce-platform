@@ -289,7 +289,20 @@ public class CheckoutOrderService(
                 }
             }
 
-            // AT-14: Write Outbox event in the same transaction so email failure never rolls back the order
+            // AT-14: Write Outbox event and rendered transactional email in the same transaction
+            var emailRenderer = new TransactionalEmailRenderer();
+            var renderedEmail = emailRenderer.RenderOrderPlacedEmail(order);
+            db.NotificationLogs.Add(new NotificationLog
+            {
+                Channel = "Email",
+                TemplateName = renderedEmail.TemplateName,
+                Recipient = renderedEmail.Recipient,
+                Subject = renderedEmail.Subject,
+                BodyHtml = renderedEmail.BodyHtml,
+                ReferenceId = renderedEmail.ReferenceId,
+                Status = "QueuedInOutbox"
+            });
+
             db.OutboxMessages.Add(new OutboxMessage
             {
                 EventType = "OrderPlaced",

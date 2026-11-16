@@ -118,3 +118,37 @@
         </div>
     </div>
 </div>
+
+<h2 class="h6 fw-bold mb-2 mt-4">4. Transakcioni Email Log (NotificationLog — AT-14)</h2>
+<div class="table-responsive bg-white rounded border shadow-sm">
+    <table class="table table-sm table-striped mb-0 small align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Vreme</th>
+                <th>Šablon / Referenca</th>
+                <th>Primalac</th>
+                <th>Naslov (Subject)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.NotificationLogs.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-3">Još nema poslatih transakcionih emailova.</td></tr>
+            }
+            @foreach (var n in Model.NotificationLogs)
+            {
+                <tr>
+                    <td>@n.CreatedAt.ToString("dd.MM HH:mm:ss")</td>
+                    <td>
+                        <span class="badge bg-info text-dark">@n.TemplateName</span>
+                        <code>@n.ReferenceId</code>
+                    </td>
+                    <td>@n.Recipient</td>
+                    <td class="fw-semibold">@n.Subject</td>
+                    <td><span class="badge bg-success">@n.Status</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

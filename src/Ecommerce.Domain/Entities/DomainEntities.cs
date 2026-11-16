@@ -392,3 +392,28 @@ public class SupplierPurchaseOrder : EntityBase
     public string LinesSummaryJson { get; set; } = "[]";
     public string? SupplierReference { get; set; }
 }
+
+public class NotificationLog : EntityBase
+{
+    public string Channel { get; set; } = "Email";
+    public string TemplateName { get; set; } = string.Empty;
+    public string Recipient { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string BodyHtml { get; set; } = string.Empty;
+    public string ReferenceId { get; set; } = string.Empty;
+    public string Status { get; set; } = "Sent";
+}
+
+public class ProductReview : EntityBase
+{
+    public Guid ProductId { get; set; }
+    public string ProductSlug { get; set; } = string.Empty;
+    public string AuthorName { get; set; } = string.Empty;
+    public string? VerifiedOrderNumber { get; set; }
+    public bool IsVerifiedPurchase { get; set; }
+    public int Rating { get; set; } = 5;
+    public string Title { get; set; } = string.Empty;
+    public string Comment { get; set; } = string.Empty;
+    public string? AdminTechnicalReply { get; set; }
+    public bool IsApproved { get; set; } = true;
+}

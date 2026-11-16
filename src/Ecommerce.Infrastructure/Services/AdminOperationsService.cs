@@ -474,6 +474,19 @@ public class AdminOperationsService(
         };
         db.Shipments.Add(shipment);
 
+        var emailRenderer = new TransactionalEmailRenderer();
+        var shippedEmail = emailRenderer.RenderOrderShippedEmail(order, shipment);
+        db.NotificationLogs.Add(new NotificationLog
+        {
+            Channel = "Email",
+            TemplateName = shippedEmail.TemplateName,
+            Recipient = shippedEmail.Recipient,
+            Subject = shippedEmail.Subject,
+            BodyHtml = shippedEmail.BodyHtml,
+            ReferenceId = shippedEmail.ReferenceId,
+            Status = "Sent"
+        });
+
         db.AuditLogs.Add(new AuditLog
         {
             Actor = actor,

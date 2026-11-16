@@ -41,6 +41,8 @@ Svi projekti se nalaze u `src/` i `tests/` i prolaze `dotnet build` i `dotnet te
    - `Services/AdminSecurityService.cs`: RBAC matrica (`OwnerAdmin` vs `Operator`) + RFC 6238 TOTP MFA generator i verifikator.
    - `Services/CourierAndPaymentService.cs`: Generator zvaničnog **NBS IPS QR** zapisa (`K:PR|V:01|C:1|...`), izvoz CSV manifesta za **PostExpress**, **BEX** i **D Express**, i parser CSV izvoda otkupnina kurira.
    - `Services/PromotionAndReturnService.cs`: Evaluacija kupona sa automatskim ograničavanjem popusta na prag minimalne marže i kreiranje zakonskih RMA zahteva.
+   - `Services/TransactionalEmailRenderer.cs`: Srpski HTML šabloni za transakcione emailove (`OrderPlaced` sa NBS IPS QR zapisom i poukom o odustanku u roku od 14 dana, `OrderShipped` sa tracking i PFR fiskalnim brojem, `ReturnSubmitted` sa RMA rokom od 8/15 dana).
+   - `Services/ProfitabilityAnalyticsService.cs`: Obračun finansijskih KPI-jeva (naplaćeni COD prihod naspram otkupnina u tranzitu, COGS, stvarni gubitak na nepreuzetim pošiljkama `ActualUnclaimedRate %` naspram `ExpectedUnclaimedRate %` i profitabilnost po artiklu).
 
 3. **`src/Ecommerce.Infrastructure`**
    - `Persistence/EcommerceDbContext.cs` i `CatalogSeeder.cs`: Automatsko punjenje baze sa 10 realističnih proizvoda (alati i oprema za domaćinstvo), 2 dobavljača (uključujući deljeni `SHARED-SKU-100` radi testiranja kanonskog modela), početnim stanjem sopstvenog magacina, globalnim pravilom marži, 3 SEO vodiča za kupovinu i 2 promo kupona (`DOBRODOSLI10`, `MAJSTOR500`).
@@ -59,7 +61,9 @@ Svi projekti se nalaze u `src/` i `tests/` i prolaze `dotnet build` i `dotnet te
    - `/Inventory` (`Inventory.cshtml`) — Korekcija sopstvenog magacina (`StockMovement`) i promena URL sluga sa automatskim 301 `RedirectRule` bez lanaca.
    - `/Returns` (`Returns.cshtml`) — Elektronska knjiga reklamacija (rok 8/15 dana) i povrat robe na stanje.
    - `/Content` (`Content.cshtml`) — Upravljanje vodičima za kupovinu (`Draft -> Review -> Published`).
-   - `/Audit` (`Audit.cshtml`) & `/Login` (`Login.cshtml`) — `AuditLog`, `OutboxMessage`, `CustomerRiskRecord` i RBAC + TOTP MFA sesija.
+   - `/Analytics` (`Analytics.cshtml`) — Finansijska analitika, profitabilnost po artiklu, praćenje stope nepreuzetih paketa i stručni odgovori na recenzije kupaca.
+   - `/OrderPrint` (`OrderPrint.cshtml`) — A4 štampa otpremnice / liste za pakovanje + zakonskog obrasca za odustanak od ugovora u roku od 14 dana.
+   - `/Audit` (`Audit.cshtml`) & `/Login` (`Login.cshtml`) — `AuditLog`, `OutboxMessage`, `CustomerRiskRecord`, `NotificationLog` i RBAC + TOTP MFA sesija.
 
 6. **`src/Ecommerce.Worker`**
    - Pozadinski procesor koji čita neobrađene `OutboxMessage` događaje i šalje HMAC-SHA256 potpisane webhook zahteve ka Next.js `/api/revalidate`.

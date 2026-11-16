@@ -531,5 +531,85 @@ public class SpecificationAcceptanceTests
         Assert.StartsWith("PO-", po.PoNumber);
         Assert.Equal(confirm.Order.OrderNumber, po.CustomerOrderNumber);
         Assert.True(po.TotalEstimatedCostRsd > 0m);
+        Assert.True(await db.NotificationLogs.AnyAsync(n => n.ReferenceId == confirm.Order.OrderNumber && n.TemplateName == "OrderPlaced"));
+    }
+
+    [Fact]
+    public void TransactionalEmailRenderer_GeneratesOrderPlacedAndShippedEmails_WithStatutory14DayNoticeAndIpsQr()
+    {
+        var renderer = new TransactionalEmailRenderer();
+        var order = new Order
+        {
+            OrderNumber = "ORD-20261116-0099",
+            CustomerFullName = "Nikola Tesla",
+            CustomerEmail = "nikola@primer.rs",
+            CustomerPhoneE164 = "+381641112223",
+            ShippingStreet = "Krunska 51",
+            ShippingPostalCode = "11000",
+            ShippingCity = "Beograd",
+            SubtotalRsd = 8990m,
+            DiscountRsd = 899m,
+            CouponCode = "DOBRODOSLI10",
+            ShippingCostRsd = 490m,
+            TotalRsd = 8581m,
+            IpsQrPayload = "K:PR|V:01|C:1|R:160000000123456789|N:ALATI|I:RSD8581,00|SF:289",
+            Items = [new OrderItem { ProductNameSnapshot = "Aku bušilica 18V", SkuSnapshot = "INT-AKU-18V-01", Quantity = 1, LineTotalRsd = 8990m }]
+        };
+
+        var placed = renderer.RenderOrderPlacedEmail(order);
+        Assert.Contains("ORD-20261116-0099", placed.Subject);
+        Assert.Contains("14 kalendarskih dana", placed.BodyHtml);
+        Assert.Contains("K:PR|V:01", placed.BodyHtml);
+
+        var shipped = renderer.RenderOrderShippedEmail(order, new Shipment
+        {
+            Carrier = "PostExpress",
+            TrackingNumber = "PE998877RS",
+            CodAmountRsd = 8581m
+        });
+        Assert.Contains("PE998877RS", shipped.Subject);
+        Assert.Contains("PostExpress", shipped.BodyHtml);
+    }
+
+    [Fact]
+    public void ProfitabilityAnalyticsService_ComputesNetMargin_Cogs_UnclaimedRateAdvisory_AndSkuRanking()
+    {
+        var analytics = new ProfitabilityAnalyticsService();
+        var orders = new List<Order>
+        {
+            new()
+            {
+                OrderNumber = "ORD-1",
+                Status = OrderStatus.Completed,
+                PaymentStatus = PaymentStatus.Paid,
+                SubtotalRsd = 10000m,
+                DiscountRsd = 500m,
+                TotalRsd = 9500m,
+                Items =
+                [
+                    new OrderItem
+                    {
+                        SkuSnapshot = "INT-AKU-18V-01",
+                        ProductNameSnapshot = "Aku bušilica 18V",
+                        Quantity = 1,
+                        UnitPriceRsd = 10000m,
+                        UnitCostSnapshotRsd = 6500m,
+                        LineTotalRsd = 10000m,
+                        FulfillmentSource = "OwnStock"
+                    }
+                ]
+            }
+        };
+
+        var shipments = new List<Shipment>
+        {
+            new() { Status = "Delivered", ReturnShippingCostRsd = 0m }
+        };
+
+        var snap = analytics.ComputeSnapshot(orders, shipments, new PricingRule { ExpectedUnclaimedRate = 0.06m });
+        Assert.Equal(9500m, snap.RealizedPaidRevenueRsd);
+        Assert.Equal(6500m, snap.TotalCogsRsd);
+        Assert.Equal(3000m, snap.EstimatedNetProfitRsd);
+        Assert.Single(snap.TopSkusByProfit);
     }
 }

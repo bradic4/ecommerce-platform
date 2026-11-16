@@ -10,6 +10,7 @@ public class AuditModel(EcommerceDbContext db) : PageModel
     public List<AuditLog> AuditLogs { get; set; } = [];
     public List<OutboxMessage> OutboxMessages { get; set; } = [];
     public List<CustomerRiskRecord> RiskRecords { get; set; } = [];
+    public List<NotificationLog> NotificationLogs { get; set; } = [];
 
     public async Task OnGetAsync(CancellationToken ct)
     {
@@ -28,6 +29,12 @@ public class AuditModel(EcommerceDbContext db) : PageModel
         RiskRecords = await db.CustomerRiskRecords
             .AsNoTracking()
             .OrderByDescending(r => r.LastIncidentAt)
+            .ToListAsync(ct);
+
+        NotificationLogs = await db.NotificationLogs
+            .AsNoTracking()
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(20)
             .ToListAsync(ct);
     }
 }

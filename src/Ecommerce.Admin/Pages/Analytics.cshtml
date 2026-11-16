@@ -1,0 +1,136 @@
+@page
+@model Ecommerce.Admin.Pages.AnalyticsModel
+@{
+    ViewData["Title"] = "Finansijska Analitika & Unit Economics";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-0">Finansijska Analitika, Profitabilnost i Stopa Nepreuzetih Paketa (Section 10, 13.3, 25.2)</h2>
+        <p class="text-muted small mb-0">Pregled naplaćene realizacije (Paid COD), otkupnina u tranzitu, nabavne vrednosti (COGS) i stvarnog troška povrata.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small">@Model.StatusMessage</div>
+}
+
+<div class="alert @(Model.Snapshot.ActualUnclaimedRatePercent > Model.Snapshot.ConfiguredExpectedUnclaimedRatePercent ? "alert-danger" : "alert-success") py-2 small fw-semibold">
+    @Model.Snapshot.UnclaimedRateAdvisory
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Naplaćeno (Paid COD / Banka)</div>
+                <div class="fs-5 fw-bold text-success">@Model.Snapshot.RealizedPaidRevenueRsd.ToString("N2") RSD</div>
+                <div class="text-muted small mt-1">U tranzitu / čeka kurira: <strong>@Model.Snapshot.PendingCodInTransitRsd.ToString("N0") RSD</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Nabavna vrednost prodate robe (COGS)</div>
+                <div class="fs-5 fw-bold text-dark">@Model.Snapshot.TotalCogsRsd.ToString("N2") RSD</div>
+                <div class="text-muted small mt-1">Odobreni kuponi: <strong>-@Model.Snapshot.TotalDiscountsGrantedRsd.ToString("N0") RSD</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Gubitak na nepreuzetim pošiljkama</div>
+                <div class="fs-5 fw-bold text-danger">@Model.Snapshot.TotalUnclaimedReturnCostRsd.ToString("N2") RSD</div>
+                <div class="text-muted small mt-1">Stvarna stopa: <strong>@Model.Snapshot.ActualUnclaimedRatePercent%</strong> (Prag: @Model.Snapshot.ConfiguredExpectedUnclaimedRatePercent%)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="background-color:#101c32;color:white;">
+            <div class="card-body">
+                <div class="small text-light opacity-75">Neto Operativni Profit (Marža)</div>
+                <div class="fs-5 fw-bold">@Model.Snapshot.EstimatedNetProfitRsd.ToString("N2") RSD</div>
+                <div class="small mt-1" style="color:#5eead4;">Neto marža: <strong>@Model.Snapshot.EstimatedNetMarginPercent%</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Profitabilnost po artiklu (SKU) i izvoru isporuke</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>SKU / Artikal</th>
+                            <th>Kom. (Naš / Dobavljač)</th>
+                            <th>Prihod (RSD)</th>
+                            <th>Nabavna (RSD)</th>
+                            <th>Bruto Profit &amp; Marža</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Snapshot.TopSkusByProfit.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">Još uvek nema aktivnih porudžbina za obračun po artiklu.</td>
+                            </tr>
+                        }
+                        @foreach (var s in Model.Snapshot.TopSkusByProfit)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">@s.ProductName</div>
+                                    <code>@s.Sku</code>
+                                </td>
+                                <td>
+                                    <strong>@s.UnitsSold</strong> kom
+                                    <span class="text-muted">(@s.OwnStockUnits naš / @s.SupplierUnits dob.)</span>
+                                </td>
+                                <td>@s.GrossRevenueRsd.ToString("N0")</td>
+                                <td>@s.TotalCostRsd.ToString("N0")</td>
+                                <td>
+                                    <span class="fw-bold text-success">@s.GrossProfitRsd.ToString("N0") RSD</span>
+                                    <span class="badge bg-light text-dark border ms-1">@s.GrossMarginPercent%</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-bold">Recenzije kupaca &amp; Stručni odgovori (AggregateRating SEO)</div>
+            <div class="card-body p-2">
+                @foreach (var rev in Model.Reviews)
+                {
+                    <div class="border rounded p-2 mb-2 small bg-light">
+                        <div class="d-flex justify-content-between">
+                            <strong>@rev.AuthorName (@rev.Rating/5 ★)</strong>
+                            <span class="badge @(rev.IsVerifiedPurchase ? "bg-success" : "bg-secondary")">
+                                @(rev.IsVerifiedPurchase ? "Verifikovana kupovina" : "Pitanje / Utisak")
+                            </span>
+                        </div>
+                        <div class="text-muted">Proizvod: <code>@rev.ProductSlug</code></div>
+                        <div class="fw-semibold mt-1">@rev.Title</div>
+                        <div>@rev.Comment</div>
+                        <form method="post" asp-page-handler="ReplyReview" class="mt-2 d-flex gap-1 align-items-center">
+                            <input type="hidden" name="reviewId" value="@rev.Id" />
+                            <input type="text" name="adminReply" value="@rev.AdminTechnicalReply" class="form-control form-control-sm" placeholder="Stručni odgovor prodavnice..." />
+                            <input type="hidden" name="isApproved" value="true" />
+                            <button type="submit" class="btn btn-sm btn-primary py-0">Odgovori</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -48,6 +48,17 @@ export interface ProductVariantDetailDto {
   schemaAvailability: string;
 }
 
+export interface ProductReviewDto {
+  id: string;
+  authorName: string;
+  isVerifiedPurchase: boolean;
+  rating: number;
+  title: string;
+  comment: string;
+  adminTechnicalReply?: string;
+  createdAt: string;
+}
+
 export interface ProductDetailDto {
   id: string;
   name: string;
@@ -62,6 +73,11 @@ export interface ProductDetailDto {
     slug: string;
   };
   variants: ProductVariantDetailDto[];
+  aggregateRating?: {
+    ratingValue: number;
+    reviewCount: number;
+  };
+  reviews?: ProductReviewDto[];
 }
 
 export interface CheckoutItemRequestDto {

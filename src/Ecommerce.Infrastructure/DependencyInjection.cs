@@ -36,6 +36,8 @@ public static class DependencyInjection
         services.AddSingleton<AdminSecurityService>();
         services.AddSingleton<CourierAndPaymentService>();
         services.AddSingleton<PromotionAndReturnService>();
+        services.AddSingleton<TransactionalEmailRenderer>();
+        services.AddSingleton<ProfitabilityAnalyticsService>();
         services.AddScoped<CheckoutOrderService>();
         services.AddScoped<AdminOperationsService>();
 

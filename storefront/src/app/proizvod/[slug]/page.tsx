@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import React from "react";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { ProductReviewsSection } from "@/components/ProductReviewsSection";
 import { fetchProductBySlug, formatRsd, SITE_URL } from "@/lib/api";
 
 export async function generateMetadata({
@@ -49,8 +50,8 @@ export default async function ProductDetailPage({
 
   const primaryVariant = product.variants[0];
 
-  // Section 14.2 & 25.6: Product + Offer JSON-LD always matches the exact server-rendered price and availability
-  const productJsonLd = {
+  // Section 14.2 & 25.6: Product + Offer + AggregateRating JSON-LD always matches the exact server-rendered state
+  const productJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
@@ -66,6 +67,16 @@ export default async function ProductDetailPage({
       itemCondition: "https://schema.org/NewCondition",
     },
   };
+
+  if (product.aggregateRating && product.aggregateRating.reviewCount > 0) {
+    productJsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: product.aggregateRating.ratingValue,
+      reviewCount: product.aggregateRating.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -237,6 +248,12 @@ export default async function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      <ProductReviewsSection
+        productSlug={product.slug}
+        initialReviews={product.reviews || []}
+        aggregateRating={product.aggregateRating}
+      />
     </div>
   );
 }

@@ -212,6 +212,25 @@ app.MapGet("/api/v1/products/{slug}", async (
         };
     }).ToList();
 
+    var reviews = await db.ProductReviews
+        .AsNoTracking()
+        .Where(r => r.ProductId == product.Id && r.IsApproved)
+        .OrderByDescending(r => r.CreatedAt)
+        .Select(r => new
+        {
+            r.Id,
+            r.AuthorName,
+            r.IsVerifiedPurchase,
+            r.Rating,
+            r.Title,
+            r.Comment,
+            r.AdminTechnicalReply,
+            r.CreatedAt
+        })
+        .ToListAsync(ct);
+
+    var avgRating = reviews.Count > 0 ? Math.Round(reviews.Average(r => r.Rating), 2) : 0.0;
+
     return Results.Ok(new
     {
         product.Id,
@@ -223,7 +242,57 @@ app.MapGet("/api/v1/products/{slug}", async (
         product.SeoTitle,
         product.SeoDescription,
         Category = product.Category is null ? null : new { product.Category.Name, product.Category.Slug },
-        Variants = variantsDto
+        Variants = variantsDto,
+        AggregateRating = reviews.Count > 0
+            ? new { RatingValue = avgRating, ReviewCount = reviews.Count }
+            : null,
+        Reviews = reviews
+    });
+});
+
+app.MapPost("/api/v1/products/{slug}/reviews", async (
+    string slug,
+    ProductReviewSubmitDto dto,
+    EcommerceDbContext db,
+    CancellationToken ct) =>
+{
+    var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
+    if (product is null)
+        return Results.NotFound(new { error = "PRODUCT_NOT_FOUND", message = "Proizvod nije pronađen." });
+
+    if (string.IsNullOrWhiteSpace(dto.AuthorName) || string.IsNullOrWhiteSpace(dto.Comment))
+        return Results.BadRequest(new { error = "INVALID_REVIEW", message = "Ime i tekst utiska su obavezni." });
+
+    var verifiedOrder = false;
+    if (!string.IsNullOrWhiteSpace(dto.OrderNumber))
+    {
+        var ordNo = dto.OrderNumber.Trim().ToUpperInvariant();
+        verifiedOrder = await db.Orders.AnyAsync(o => o.OrderNumber == ordNo && o.Status != OrderStatus.Cancelled, ct);
+    }
+
+    var review = new Ecommerce.Domain.Entities.ProductReview
+    {
+        ProductId = product.Id,
+        ProductSlug = product.Slug,
+        AuthorName = dto.AuthorName.Trim(),
+        VerifiedOrderNumber = dto.OrderNumber?.Trim().ToUpperInvariant(),
+        IsVerifiedPurchase = verifiedOrder,
+        Rating = Math.Clamp(dto.Rating, 1, 5),
+        Title = string.IsNullOrWhiteSpace(dto.Title) ? "Utisak kupca" : dto.Title.Trim(),
+        Comment = dto.Comment.Trim(),
+        IsApproved = true
+    };
+
+    db.ProductReviews.Add(review);
+    await db.SaveChangesAsync(ct);
+
+    return Results.Ok(new
+    {
+        review.Id,
+        review.IsVerifiedPurchase,
+        Message = verifiedOrder
+            ? "Hvala! Vaša recenzija je objavljena sa oznakom 'Verifikovana kupovina'."
+            : "Hvala! Vaš utisak / tehničko pitanje je uspešno zabeleženo."
     });
 });
 
@@ -508,5 +577,12 @@ public record ReturnSubmissionDto(
     string ReturnType,
     string ReasonDescription,
     string? CustomerBankAccount);
+
+public record ProductReviewSubmitDto(
+    string AuthorName,
+    string? OrderNumber,
+    int Rating,
+    string? Title,
+    string Comment);
 
 public partial class Program;

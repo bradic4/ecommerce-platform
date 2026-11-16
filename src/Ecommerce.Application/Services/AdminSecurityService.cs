@@ -15,6 +15,7 @@ public class AdminSecurityService
         "/Suppliers",
         "/Pricing",
         "/Coupons",
+        "/Analytics",
         "/Audit"
     };
 

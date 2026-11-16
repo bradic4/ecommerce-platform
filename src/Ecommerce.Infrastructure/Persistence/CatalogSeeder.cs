@@ -252,6 +252,39 @@ public static class CatalogSeeder
             }
         );
 
+        var firstProduct = db.Products.Local.FirstOrDefault(p => p.Slug == "aku-busilica-odvrtac-18v-2x2ah-kofer")
+                           ?? db.Products.Local.FirstOrDefault();
+        if (firstProduct is not null)
+        {
+            db.ProductReviews.AddRange(
+                new ProductReview
+                {
+                    ProductId = firstProduct.Id,
+                    ProductSlug = firstProduct.Slug,
+                    AuthorName = "Dejan M. (Novi Sad)",
+                    VerifiedOrderNumber = "ORD-20261101-0012",
+                    IsVerifiedPurchase = true,
+                    Rating = 5,
+                    Title = "Odličan obrtni moment i dve baterije u koferu",
+                    Comment = "Koristim je već dve nedelje za sklapanje kuhinjskih elemenata i šrafljenje u grede. Baterija od 2Ah drži ceo dan, a punjač napuni drugu za manje od sat vremena.",
+                    AdminTechnicalReply = "Hvala Dejane! Podsećamo da na motor bez četkica imate punu saobraznost od 24 meseca.",
+                    IsApproved = true
+                },
+                new ProductReview
+                {
+                    ProductId = firstProduct.Id,
+                    ProductSlug = firstProduct.Slug,
+                    AuthorName = "Slobodan K. (Čačak)",
+                    VerifiedOrderNumber = "ORD-20261105-0029",
+                    IsVerifiedPurchase = true,
+                    Rating = 5,
+                    Title = "Stiglo za 24h PostExpressom",
+                    Comment = "Metalni futer 13mm ne proklizava pri bušenju metala. Za ovu cenu najbolji odnos kvaliteta u klasi.",
+                    IsApproved = true
+                }
+            );
+        }
+
         await db.SaveChangesAsync(ct);
     }
 }
