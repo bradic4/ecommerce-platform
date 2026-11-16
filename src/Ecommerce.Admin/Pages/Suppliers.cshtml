@@ -5,7 +5,12 @@
 }
 
 <h1 class="h4 fw-bold mb-1">Dobavljači, Mapiranje i Import Pipeline (Sekcije 08, 09, 25.2)</h1>
-<p class="text-muted small mb-4">Dry-Run pregled diffa, zaštita od pogrešnih decimala (1232.0000), masovnog brisanja (&gt;20%) i naglih skokova cena (&gt;30%).</p>
+<p class="text-muted small mb-4">Dry-Run pregled diffa, dinamički mapper kolona/PDV-a, mapiranje kategorija i zaštita od masovnog brisanja (&gt;20%) i skokova cena (&gt;30%).</p>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info py-2 small fw-semibold">@Model.StatusMessage</div>
+}
 
 @if (Model.LastPreview is not null)
 {
@@ -116,6 +121,114 @@
                                 <td>@(run.IsDryRun ? "Dry-Run" : "APPLY") (@(run.IsDeltaFeed ? "Delta" : "Full"))</td>
                                 <td><span class="badge bg-secondary">@run.Status</span></td>
                                 <td>+@run.AddedCount / ~@run.UpdatedCount / !@run.QuarantinedCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-bold small">3. Profili Adaptera Dobavljača (Mapiranje kolona, PDV 20% i Automatski HTTP Sync)</div>
+            <div class="card-body">
+                @foreach (var s in Model.Suppliers)
+                {
+                    <form method="post" asp-page-handler="UpdateSupplierProfile" class="border rounded p-3 mb-3 bg-light small">
+                        <input type="hidden" name="supplierId" value="@s.Id" />
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="fs-6">@s.Name (<code>@s.Code</code>)</strong>
+                            <span class="badge bg-dark">Model: @s.DefaultFulfillmentModel</span>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label mb-0 fw-semibold">HTTP Feed URL (za Worker Auto-Sync)</label>
+                                <input type="text" name="feedUrl" value="@s.FeedUrl" class="form-control form-control-sm" placeholder="https://b2b.dobavljac.rs/export/cenovnik.xml" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-0 fw-semibold">Format</label>
+                                <input type="text" name="feedFormat" value="@s.FeedFormat" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-0 fw-semibold">CSV Delim.</label>
+                                <input type="text" name="csvDelimiter" value="@s.CsvDelimiter" class="form-control form-control-sm" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-0 fw-semibold">Dec. Sep.</label>
+                                <input type="text" name="decimalSeparator" value="@s.DecimalSeparator" class="form-control form-control-sm" />
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-0 fw-semibold">JSON Mapiranje Kolona / XML Tagova</label>
+                            <input type="text" name="columnMappingJson" value="@s.ColumnMappingJson" class="form-control form-control-sm font-monospace" />
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
+                            <div class="d-flex gap-3 align-items-center">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="feedPricesIncludeVat" value="true" id="vat-@s.Id" checked="@s.FeedPricesIncludeVat" />
+                                    <label class="form-check-label" for="vat-@s.Id">Cene u feedu su SA PDV-om (ako nije, dodaje se +@s.VatRatePercent%)</label>
+                                </div>
+                                <input type="hidden" name="vatRatePercent" value="@s.VatRatePercent" />
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="autoSyncEnabled" value="true" id="sync-@s.Id" checked="@s.AutoSyncEnabled" />
+                                    <label class="form-check-label" for="sync-@s.Id">Auto-Sync (@s.SyncIntervalMinutes min)</label>
+                                </div>
+                                <input type="hidden" name="syncIntervalMinutes" value="@s.SyncIntervalMinutes" />
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary py-0">Sačuvaj profil</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-bold small">4. Mapiranje Kategorija Dobavljača u Naše SEO Kategorije</div>
+            <div class="card-body small">
+                <form method="post" asp-page-handler="AddCategoryMapping" class="mb-3 border-bottom pb-3">
+                    <div class="mb-2">
+                        <label class="form-label mb-0 fw-semibold">Dobavljač</label>
+                        <select name="supplierId" class="form-select form-select-sm">
+                            @foreach (var s in Model.Suppliers)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label mb-0 fw-semibold">Sirova kategorija iz feeda dobavljača</label>
+                        <input type="text" name="rawCategoryName" class="form-control form-control-sm" required placeholder="npr. ELEKTRIČNI ALATI -> Bušilice" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label mb-0 fw-semibold">Naša ciljna SEO kategorija</label>
+                        <select name="targetCategoryId" class="form-select form-select-sm">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id">@c.Name (/kategorija/@c.Slug)</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary fw-bold w-100">Dodaj mapiranje kategorije</button>
+                </form>
+
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sirova kategorija dobavljača</th>
+                            <th>Naša SEO kategorija</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in Model.CategoryMappings)
+                        {
+                            <tr>
+                                <td><code>@m.SupplierCategoryRawName</code></td>
+                                <td class="fw-bold">@m.TargetCategoryName</td>
                             </tr>
                         }
                     </tbody>

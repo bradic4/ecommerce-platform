@@ -31,6 +31,7 @@ public class EcommerceDbContext(DbContextOptions<EcommerceDbContext> options) : 
     public DbSet<SupplierPurchaseOrder> SupplierPurchaseOrders => Set<SupplierPurchaseOrder>();
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
     public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+    public DbSet<SupplierCategoryMapping> SupplierCategoryMappings => Set<SupplierCategoryMapping>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

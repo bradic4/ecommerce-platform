@@ -105,6 +105,18 @@ public class Supplier : EntityBase
     public CodCollectionMode CodCollectionMode { get; set; } = CodCollectionMode.OurCarrierAccount;
     public FulfillmentModel DefaultFulfillmentModel { get; set; } = FulfillmentModel.ModelB_CrossDock;
 
+    // Section 8.2 Dynamic Feed Adapter & Scheduled Sync Configuration
+    public string? FeedUrl { get; set; }
+    public string FeedFormat { get; set; } = "CSV";
+    public string CsvDelimiter { get; set; } = ";";
+    public string DecimalSeparator { get; set; } = ".";
+    public bool FeedPricesIncludeVat { get; set; } = true;
+    public decimal VatRatePercent { get; set; } = 20.00m;
+    public string ColumnMappingJson { get; set; } = """{"Sku":"sifra","Name":"naziv","Price":"cena","Qty":"stanje","Ean":"ean","Brand":"brend","Category":"kategorija"}""";
+    public bool AutoSyncEnabled { get; set; }
+    public int SyncIntervalMinutes { get; set; } = 240;
+    public DateTimeOffset? LastSyncedAt { get; set; }
+
     public List<SupplierOffer> Offers { get; set; } = [];
 }
 
@@ -416,4 +428,12 @@ public class ProductReview : EntityBase
     public string Comment { get; set; } = string.Empty;
     public string? AdminTechnicalReply { get; set; }
     public bool IsApproved { get; set; } = true;
+}
+
+public class SupplierCategoryMapping : EntityBase
+{
+    public Guid SupplierId { get; set; }
+    public string SupplierCategoryRawName { get; set; } = string.Empty;
+    public Guid TargetCategoryId { get; set; }
+    public string TargetCategoryName { get; set; } = string.Empty;
 }

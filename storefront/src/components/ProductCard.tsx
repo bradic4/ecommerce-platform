@@ -71,6 +71,7 @@ export function ProductCard({ product }: { product: CatalogProductItemDto }) {
               productName={product.name}
               sku={product.sku || ""}
               isOrderable={product.isOrderable}
+              unitPriceRsd={product.priceRsd}
               fullWidth
             />
           )}

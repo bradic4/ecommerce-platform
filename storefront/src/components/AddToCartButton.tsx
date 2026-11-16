@@ -9,6 +9,7 @@ interface AddToCartButtonProps {
   productName: string;
   sku: string;
   isOrderable: boolean;
+  unitPriceRsd?: number;
   fullWidth?: boolean;
 }
 
@@ -18,6 +19,7 @@ export function AddToCartButton({
   productName,
   sku,
   isOrderable,
+  unitPriceRsd,
   fullWidth = false,
 }: AddToCartButtonProps) {
   const { addItem } = useCart();
@@ -36,7 +38,7 @@ export function AddToCartButton({
   }
 
   const handleClick = () => {
-    addItem({ variantId, productSlug, productName, sku }, 1);
+    addItem({ variantId, productSlug, productName, sku, unitPriceRsd }, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 1400);
   };

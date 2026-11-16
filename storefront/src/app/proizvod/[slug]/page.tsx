@@ -212,11 +212,39 @@ export default async function ProductDetailPage({
 
             <div className="mt-6">
               <h3 className="text-sm font-bold text-[#101c32]">
-                Opis i proverene karakteristike
+                Opis i proverene tehničke karakteristike
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
                 {product.description}
               </p>
+
+              {product.shortSpecification && (
+                <div className="mt-4 overflow-hidden rounded-lg border border-slate-200">
+                  <table className="w-full text-left text-xs">
+                    <tbody className="divide-y divide-slate-200">
+                      {product.shortSpecification
+                        .split("|")
+                        .map((part) => part.trim())
+                        .filter(Boolean)
+                        .map((spec, idx) => {
+                          const [k, v] = spec.includes(":")
+                            ? spec.split(":", 2)
+                            : [`Parametar ${idx + 1}`, spec];
+                          return (
+                            <tr key={idx} className="odd:bg-slate-50/70">
+                              <th className="w-2/5 px-3 py-2 font-semibold text-slate-600">
+                                {k.trim()}
+                              </th>
+                              <td className="px-3 py-2 font-bold text-[#101c32]">
+                                {v.trim()}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
@@ -228,6 +256,7 @@ export default async function ProductDetailPage({
                 productName={product.name}
                 sku={primaryVariant.internalSku}
                 isOrderable={primaryVariant.isOrderable}
+                unitPriceRsd={primaryVariant.priceRsd}
               />
               <Link
                 href="/checkout"
@@ -239,7 +268,7 @@ export default async function ProductDetailPage({
 
             <div className="grid gap-2 rounded-md bg-[#edf3f7] p-3 text-xs text-[#172942] sm:grid-cols-2">
               <div>
-                ✓ <strong>Plaćanje pouzećem:</strong> gotovinom kuriru prilikom preuzimanja paketa.
+                ✓ <strong>Plaćanje pouzećem ili IPS QR:</strong> bez rizika pri kupovini.
               </div>
               <div>
                 ✓ <strong>Pravo na odustanak:</strong> 14 dana od prijema pošiljke bez navođenja razloga.
@@ -254,6 +283,24 @@ export default async function ProductDetailPage({
         initialReviews={product.reviews || []}
         aggregateRating={product.aggregateRating}
       />
+
+      {/* Sticky Mobile Bottom CTA Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-between border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur md:hidden">
+        <div>
+          <div className="text-[11px] text-slate-500">Cena sa PDV-om:</div>
+          <div className="text-base font-extrabold text-[#101c32]">
+            {formatRsd(primaryVariant.priceRsd)}
+          </div>
+        </div>
+        <AddToCartButton
+          variantId={primaryVariant.id}
+          productSlug={product.slug}
+          productName={product.name}
+          sku={primaryVariant.internalSku}
+          isOrderable={primaryVariant.isOrderable}
+          unitPriceRsd={primaryVariant.priceRsd}
+        />
+      </div>
     </div>
   );
 }

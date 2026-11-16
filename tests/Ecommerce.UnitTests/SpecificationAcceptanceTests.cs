@@ -612,4 +612,43 @@ public class SpecificationAcceptanceTests
         Assert.Equal(3000m, snap.EstimatedNetProfitRsd);
         Assert.Single(snap.TopSkusByProfit);
     }
+
+    [Fact]
+    public void SupplierFeedMapper_MapsCustomHeadersAndXmlTags_Adds20PercentPdvWhenNetPrice_AndMapsCategories()
+    {
+        var mapper = new SupplierFeedMapperService(new SupplierFeedService());
+        var targetCatId = Guid.NewGuid();
+        var supplier = new Supplier
+        {
+            Name = "Veleprodaja B2B",
+            Code = "VP-B2B",
+            FeedFormat = "CSV",
+            CsvDelimiter = ";",
+            DecimalSeparator = ".",
+            FeedPricesIncludeVat = false,
+            VatRatePercent = 20.00m,
+            ColumnMappingJson = """{"Sku":"KatBr","Name":"ArtikalNaziv","Price":"VPCenaBezPDV","Qty":"LagerStanje","Ean":"Barkod","Brand":"Proizvodjac","Category":"Grupa"}"""
+        };
+
+        var catMappings = new List<SupplierCategoryMapping>
+        {
+            new()
+            {
+                SupplierId = supplier.Id,
+                SupplierCategoryRawName = "ELEKTRIČNI ALATI -> Bušilice",
+                TargetCategoryId = targetCatId,
+                TargetCategoryName = "Aku i električni alati"
+            }
+        };
+
+        var csv = "KatBr;ArtikalNaziv;VPCenaBezPDV;LagerStanje;Barkod;Proizvodjac;Grupa\n" +
+                  "VP-100;Udarna bušilica 18V;5000.00;IMA;8606000001011;Bosch;ELEKTRIČNI ALATI -> Bušilice";
+
+        var mapped = mapper.ParseCustomSupplierFeed(supplier, csv, catMappings);
+        Assert.Single(mapped);
+        // 5000.00 net + 20% PDV = 6000.00 gross purchase cost!
+        Assert.Equal("6000.00", mapped[0].FeedRowInput.RawPurchasePrice);
+        Assert.Equal(5, mapped[0].FeedRowInput.Quantity);
+        Assert.Equal(targetCatId, mapped[0].MappedTargetCategoryId);
+    }
 }

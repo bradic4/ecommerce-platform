@@ -21,6 +21,10 @@ public static partial class SerbianTextNormalizer
     /// Normalizes Serbian text (Cyrillic or Latin with diacritics) into ASCII search tokens.
     /// Treats "bušilica", "busilica", "бушилица", and "đon"/"djon" identically (Section 25.4).
     /// </summary>
+    public static string NormalizeForSearch(string? input) => NormalizeSearchText(input);
+
+    public static string BuildCompositeSearchText(params string?[] parts) => NormalizeSearchText(parts);
+
     public static string NormalizeSearchText(params string?[] parts)
     {
         var sb = new StringBuilder();

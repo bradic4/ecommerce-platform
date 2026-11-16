@@ -21,14 +21,57 @@ public class Worker(
             try
             {
                 await ProcessPendingOutboxMessagesAsync(stoppingToken);
+                await ProcessScheduledSupplierFeedsAsync(stoppingToken);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Greška pri obradi Outbox poruka.");
+                logger.LogError(ex, "Greška pri obradi Outbox ili Auto-Sync zadataka.");
             }
 
             await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
+    }
+
+    public async Task<int> ProcessScheduledSupplierFeedsAsync(CancellationToken ct)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<EcommerceDbContext>();
+        var adminOps = scope.ServiceProvider.GetRequiredService<AdminOperationsService>();
+        var now = DateTimeOffset.UtcNow;
+
+        var dueSuppliers = await db.Suppliers
+            .Where(s => s.IsActive && s.AutoSyncEnabled && s.FeedUrl != null && s.FeedUrl != "")
+            .ToListAsync(ct);
+
+        int synced = 0;
+        foreach (var sup in dueSuppliers)
+        {
+            var nextDue = sup.LastSyncedAt?.AddMinutes(Math.Max(15, sup.SyncIntervalMinutes)) ?? DateTimeOffset.MinValue;
+            if (now < nextDue) continue;
+
+            try
+            {
+                var rawContent = await HttpClient.GetStringAsync(sup.FeedUrl, ct);
+                var decSep = string.IsNullOrEmpty(sup.DecimalSeparator) ? '.' : sup.DecimalSeparator[0];
+                await adminOps.ExecuteFeedImportAsync(
+                    sup.Id,
+                    rawContent,
+                    sup.FeedFormat,
+                    new Ecommerce.Application.Services.FeedImportOptions(DecimalSeparator: decSep, IsDeltaFeed: false, IsDryRun: false),
+                    "worker-autosync",
+                    ct);
+
+                sup.LastSyncedAt = now;
+                await db.SaveChangesAsync(ct);
+                synced++;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Auto-sync nije uspeo za dobavljača {SupplierCode} ({FeedUrl})", sup.Code, sup.FeedUrl);
+            }
+        }
+
+        return synced;
     }
 
     public async Task<int> ProcessPendingOutboxMessagesAsync(CancellationToken ct)

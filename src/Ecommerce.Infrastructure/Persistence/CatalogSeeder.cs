@@ -285,6 +285,23 @@ public static class CatalogSeeder
             );
         }
 
+        db.SupplierCategoryMappings.AddRange(
+            new SupplierCategoryMapping
+            {
+                SupplierId = supA.Id,
+                SupplierCategoryRawName = "ELEKTRIČNI I AKU ALATI",
+                TargetCategoryId = catAlat.Id,
+                TargetCategoryName = catAlat.Name
+            },
+            new SupplierCategoryMapping
+            {
+                SupplierId = supA.Id,
+                SupplierCategoryRawName = "BAŠTA I DVORIŠTE",
+                TargetCategoryId = catKuca.Id,
+                TargetCategoryName = catKuca.Name
+            }
+        );
+
         await db.SaveChangesAsync(ct);
     }
 }

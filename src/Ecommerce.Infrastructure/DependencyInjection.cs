@@ -30,6 +30,7 @@ public static class DependencyInjection
 
         services.AddSingleton<PricingEngine>();
         services.AddSingleton<SupplierFeedService>();
+        services.AddSingleton<SupplierFeedMapperService>();
         services.AddSingleton<HybridInventoryService>();
         services.AddSingleton<AntiFraudRiskEvaluator>();
         services.AddSingleton<SerbianCatalogSearchService>();

@@ -8,6 +8,7 @@ export interface CartItem {
   productName: string;
   sku: string;
   quantity: number;
+  unitPriceRsd?: number;
 }
 
 export interface CompareProductItem {
@@ -33,6 +34,9 @@ interface CartContextValue {
   compareItems: CompareProductItem[];
   toggleCompareItem: (item: CompareProductItem) => void;
   clearCompare: () => void;
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -42,6 +46,7 @@ const COMPARE_STORAGE_KEY = "porodicna_prodavnica_compare_v1";
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [compareItems, setCompareItems] = useState<CompareProductItem[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -75,13 +80,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       persist(
         items.map((i) =>
           i.variantId === item.variantId
-            ? { ...i, quantity: Math.min(20, i.quantity + qty) }
+            ? {
+                ...i,
+                quantity: Math.min(20, i.quantity + qty),
+                unitPriceRsd: item.unitPriceRsd ?? i.unitPriceRsd,
+              }
             : i
         )
       );
     } else {
       persist([...items, { ...item, quantity: Math.max(1, qty) }]);
     }
+    setIsDrawerOpen(true);
   };
 
   const updateQuantity = (variantId: string, qty: number) => {
@@ -136,6 +146,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         compareItems,
         toggleCompareItem,
         clearCompare,
+        isDrawerOpen,
+        openDrawer: () => setIsDrawerOpen(true),
+        closeDrawer: () => setIsDrawerOpen(false),
       }}
     >
       {children}
