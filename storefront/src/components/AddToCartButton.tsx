@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useCart } from "./CartContext";
+import { IconCart, IconCheck } from "./Icons";
 
 interface AddToCartButtonProps {
   variantId: string;
@@ -30,7 +31,9 @@ export function AddToCartButton({
       <button
         type="button"
         disabled
-        className={`${fullWidth ? "w-full" : ""} cursor-not-allowed rounded-md bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500`}
+        className={`${
+          fullWidth ? "w-full" : ""
+        } cursor-not-allowed rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500`}
       >
         Trenutno nedostupno
       </button>
@@ -47,13 +50,25 @@ export function AddToCartButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`${fullWidth ? "w-full" : ""} rounded-md px-4 py-2.5 text-sm font-bold text-white transition ${
+      className={`${
+        fullWidth ? "w-full" : ""
+      } cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold text-white shadow-xs transition duration-200 ${
         added
-          ? "bg-emerald-600"
-          : "bg-[#101c32] hover:bg-[#1e3358]"
+          ? "bg-[#059669]"
+          : "bg-[#EA580C] hover:bg-[#D97706] active:translate-y-0"
       }`}
     >
-      {added ? "✓ Dodato u korpu" : "Dodaj u korpu"}
+      {added ? (
+        <>
+          <IconCheck className="h-4 w-4" />
+          <span>Dodato u korpu</span>
+        </>
+      ) : (
+        <>
+          <IconCart className="h-4 w-4" />
+          <span>Dodaj u korpu</span>
+        </>
+      )}
     </button>
   );
 }

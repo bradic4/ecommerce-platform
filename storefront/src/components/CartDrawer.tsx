@@ -5,6 +5,7 @@ import React from "react";
 import { formatRsd } from "@/lib/api";
 import { STORE_CONFIG } from "@/lib/store-config";
 import { useCart } from "./CartContext";
+import { IconCheck, IconChevronRight, IconClose } from "./Icons";
 
 export function CartDrawer() {
   const {
@@ -38,34 +39,37 @@ export function CartDrawer() {
       />
 
       <aside className="relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-[#101c32] px-5 py-4 text-white">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-[#0F172A] px-5 py-4 text-white">
           <div>
             <h2 className="text-base font-extrabold">
               Vaša korpa ({totalQuantity})
             </h2>
-            <p className="text-[11px] text-slate-300">
-              Plaćanje pouzećem ili NBS IPS QR nalogom
+            <p className="text-xs text-slate-300">
+              Plaćanje pouzećem kuriru ili NBS IPS QR nalogom
             </p>
           </div>
           <button
             type="button"
             onClick={closeDrawer}
-            className="rounded-md bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-200 hover:bg-slate-700"
+            aria-label="Zatvori korpu"
+            className="cursor-pointer inline-flex items-center gap-1 rounded-md bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700"
           >
-            Zatvori ✕
+            <span>Zatvori</span>
+            <IconClose className="h-3.5 w-3.5" />
           </button>
         </div>
 
         {estimatedSubtotal > 0 && (
-          <div className="border-b border-slate-200 bg-teal-50/70 px-5 py-3 text-xs">
+          <div className="border-b border-emerald-200 bg-emerald-50/70 px-5 py-3 text-xs">
             {remainingForFree === 0 ? (
-              <div className="font-bold text-emerald-800">
-                ✓ Ostvarili ste BESPLATNU isporuku na kućnu adresu!
+              <div className="inline-flex items-center gap-1.5 font-bold text-[#064E3B]">
+                <IconCheck className="h-4 w-4 text-[#059669]" />
+                <span>Ostvarili ste besplatnu isporuku na kućnu adresu!</span>
               </div>
             ) : (
               <div className="text-slate-700">
                 Dodajte još{" "}
-                <strong className="text-[#101c32]">
+                <strong className="text-[#0F172A] tabular-nums">
                   {formatRsd(remainingForFree)}
                 </strong>{" "}
                 do <strong>besplatne dostave</strong>!
@@ -73,7 +77,7 @@ export function CartDrawer() {
             )}
             <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full bg-[#0f807f] transition-all duration-300"
+                className="h-full bg-[#059669] transition-all duration-300"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -89,7 +93,7 @@ export function CartDrawer() {
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="rounded-md bg-[#101c32] px-4 py-2 text-xs font-bold text-white"
+                className="cursor-pointer rounded-lg bg-[#0F172A] px-4 py-2 text-xs font-bold text-white"
               >
                 Nastavi kupovinu
               </button>
@@ -102,19 +106,19 @@ export function CartDrawer() {
                     <Link
                       href={`/proizvod/${item.productSlug}`}
                       onClick={closeDrawer}
-                      className="font-bold text-[#101c32] hover:text-[#0f807f] text-sm"
+                      className="font-bold text-[#0F172A] hover:text-[#059669] text-sm"
                     >
                       {item.productName}
                     </Link>
                     <button
                       type="button"
                       onClick={() => removeItem(item.variantId)}
-                      className="text-slate-400 hover:text-red-600 font-bold"
+                      className="cursor-pointer text-slate-500 hover:text-red-600 font-bold"
                     >
                       Ukloni
                     </button>
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-slate-500">
+                  <div className="mt-0.5 font-mono text-[11px] text-slate-500 tabular-nums">
                     SKU: {item.sku}
                   </div>
                   <div className="mt-2.5 flex items-center justify-between">
@@ -124,11 +128,11 @@ export function CartDrawer() {
                         onClick={() =>
                           updateQuantity(item.variantId, item.quantity - 1)
                         }
-                        className="px-2.5 py-1 font-bold text-slate-700 hover:bg-slate-100"
+                        className="cursor-pointer px-2.5 py-1 font-bold text-slate-700 hover:bg-slate-100"
                       >
                         -
                       </button>
-                      <span className="px-3 py-1 font-bold text-slate-900">
+                      <span className="px-3 py-1 font-bold text-slate-900 tabular-nums">
                         {item.quantity}
                       </span>
                       <button
@@ -136,13 +140,13 @@ export function CartDrawer() {
                         onClick={() =>
                           updateQuantity(item.variantId, item.quantity + 1)
                         }
-                        className="px-2.5 py-1 font-bold text-slate-700 hover:bg-slate-100"
+                        className="cursor-pointer px-2.5 py-1 font-bold text-slate-700 hover:bg-slate-100"
                       >
                         +
                       </button>
                     </div>
                     {item.unitPriceRsd && (
-                      <span className="font-extrabold text-[#101c32] text-sm">
+                      <span className="font-extrabold text-[#0F172A] text-sm tabular-nums">
                         {formatRsd(item.unitPriceRsd * item.quantity)}
                       </span>
                     )}
@@ -158,7 +162,7 @@ export function CartDrawer() {
             {estimatedSubtotal > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600">Okvirni međuzbir:</span>
-                <span className="text-base font-extrabold text-[#101c32]">
+                <span className="text-base font-extrabold text-[#0F172A] tabular-nums">
                   {formatRsd(estimatedSubtotal)}
                 </span>
               </div>
@@ -167,14 +171,15 @@ export function CartDrawer() {
               <Link
                 href="/checkout"
                 onClick={closeDrawer}
-                className="w-full rounded-lg bg-[#0f807f] px-4 py-3 text-center text-sm font-extrabold text-white shadow-sm hover:bg-teal-700 transition"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#EA580C] px-4 py-3 text-center text-sm font-extrabold text-white shadow-sm hover:bg-[#D97706] transition"
               >
-                Idi na plaćanje i dostavu &rarr;
+                <span>Pređi na podatke za isporuku</span>
+                <IconChevronRight className="h-4 w-4" />
               </Link>
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                className="cursor-pointer w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
               >
                 Nastavi sa pregledom kataloga
               </button>

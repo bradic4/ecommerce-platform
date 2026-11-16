@@ -24,6 +24,9 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [note, setNote] = useState("");
+  const [isB2bInvoice, setIsB2bInvoice] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [companyPib, setCompanyPib] = useState("");
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CashOnDelivery");
@@ -103,6 +106,10 @@ export default function CheckoutPage() {
       return;
     }
 
+    const combinedNote = isB2bInvoice && companyPib.trim()
+      ? `[RAČUN ZA FIRMU: ${companyName.trim()} | PIB: ${companyPib.trim()}] ${note}`.trim()
+      : note;
+
     setSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/checkout/confirm`, {
@@ -116,7 +123,7 @@ export default function CheckoutPage() {
           shippingStreet: street,
           shippingCity: city,
           shippingPostalCode: postalCode,
-          customerNote: note,
+          customerNote: combinedNote,
           couponCode: appliedCoupon || null,
           preferredPaymentMethod: paymentMethod,
           items: items.map((i) => ({
@@ -483,12 +490,65 @@ export default function CheckoutPage() {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Interfon, sprat ili vreme kada ste na adresi..."
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#245eac] focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#059669] focus:outline-none"
               />
             </div>
 
-            <div className="space-y-2 rounded-md bg-slate-50 p-3 text-xs text-slate-700 border border-slate-200">
-              <div className="font-bold text-[#101c32]">Način plaćanja:</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs">
+              <label className="flex items-center gap-2 font-bold text-[#0F172A] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isB2bInvoice}
+                  onChange={(e) => setIsB2bInvoice(e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                <span>Želim fiskalni račun na firmu (unesite PIB i naziv)</span>
+              </label>
+
+              {isB2bInvoice && (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="companyName"
+                      className="mb-1 block font-semibold text-slate-700"
+                    >
+                      Naziv firme / radnje *
+                    </label>
+                    <input
+                      id="companyName"
+                      type="text"
+                      required={isB2bInvoice}
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="npr. Tehno Mont DOO"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="companyPib"
+                      className="mb-1 block font-semibold text-slate-700"
+                    >
+                      PIB (9 cifara) *
+                    </label>
+                    <input
+                      id="companyPib"
+                      type="text"
+                      required={isB2bInvoice}
+                      pattern="\d{9}"
+                      title="Unesite 9 cifara PIB-a"
+                      value={companyPib}
+                      onChange={(e) => setCompanyPib(e.target.value)}
+                      placeholder="100000000"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-mono tabular-nums"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 rounded-xl bg-slate-50 p-3.5 text-xs text-slate-700 border border-slate-200">
+              <div className="font-bold text-[#0F172A]">Način plaćanja:</div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -527,18 +587,18 @@ export default function CheckoutPage() {
                 <Link
                   href="/uslovi-kupovine"
                   target="_blank"
-                  className="font-semibold text-[#245eac] underline"
+                  className="font-semibold text-[#059669] underline"
                 >
                   uslove kupovine, politiku privatnosti i informaciju o pravu na odustanak (14 dana)
                 </Link>{" "}
-                i potvrđujem porudžbinu sa obavezom plaćanja pri preuzimanju.
+                i potvrđujem porudžbinu sa obavezom plaćanja.
               </span>
             </label>
 
             <button
               type="submit"
               disabled={submitting || loadingQuote || !quote?.canProceed}
-              className="w-full rounded-md bg-[#0f807f] px-5 py-3 text-sm font-extrabold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-300 transition"
+              className="cursor-pointer w-full rounded-xl bg-[#EA580C] px-5 py-3.5 text-sm font-extrabold text-white shadow-sm hover:bg-[#D97706] disabled:cursor-not-allowed disabled:bg-slate-300 transition tabular-nums"
             >
               {submitting
                 ? "Slanje porudžbine..."

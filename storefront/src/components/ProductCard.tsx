@@ -3,63 +3,86 @@ import React from "react";
 import { CatalogProductItemDto, formatRsd } from "@/lib/api";
 import { AddToCartButton } from "./AddToCartButton";
 import { CompareButton } from "./CompareButton";
+import { ProductVisual } from "./ProductVisual";
 
 export function ProductCard({ product }: { product: CatalogProductItemDto }) {
+  const specTags = (product.shortSpecification || "")
+    .split("|")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+
   return (
-    <article className="flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-md">
+    <article
+      className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition duration-200 hover:border-emerald-500/40"
+      style={{ boxShadow: "var(--shadow-card)" }}
+    >
       <div>
-        <div className="mb-2 flex items-center justify-between gap-2 text-xs">
+        <Link
+          href={`/proizvod/${product.slug}`}
+          className="block cursor-pointer focus:outline-none"
+        >
+          <ProductVisual
+            slug={product.slug}
+            name={product.name}
+            sku={product.sku}
+            brandName={product.brandName}
+            ownStockAvailable={product.ownStockAvailable}
+            size="card"
+          />
+        </Link>
+
+        <div className="mt-3.5 flex items-center justify-between gap-2 text-xs">
           {product.categorySlug ? (
             <Link
               href={`/kategorija/${product.categorySlug}`}
-              className="font-semibold text-[#245eac] hover:underline"
+              className="font-semibold text-[#059669] hover:underline"
             >
               {product.categoryName}
             </Link>
           ) : (
             <span className="text-slate-500">Katalog</span>
           )}
-          <span className="font-mono text-slate-500">
-            {product.brandName ? `${product.brandName} • ` : ""}SKU: {product.sku}
+          <span className="text-slate-500 font-medium">
+            {product.availabilityLabel}
           </span>
         </div>
 
-        <h2 className="mb-2 text-base font-bold leading-snug text-[#101c32]">
+        <h3 className="mt-1.5 text-base font-bold leading-snug text-[#0F172A]">
           <Link
             href={`/proizvod/${product.slug}`}
-            className="hover:text-[#245eac] transition"
+            className="hover:text-[#059669] transition"
           >
             {product.name}
           </Link>
-        </h2>
+        </h3>
 
-        {product.shortSpecification && (
-          <p className="mb-4 text-xs leading-relaxed text-slate-600">
-            {product.shortSpecification}
-          </p>
+        {specTags.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {specTags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
-      <div className="mt-2 border-t border-slate-100 pt-3">
+      <div className="mt-4 border-t border-slate-100 pt-3.5">
         <div className="mb-3 flex items-baseline justify-between">
           <div>
-            <span className="block text-[11px] text-slate-500">
-              Prodajna cena (sa PDV-om):
+            <span className="block text-[11px] font-medium text-slate-500">
+              Cena sa uračunatim PDV-om
             </span>
-            <span className="text-lg font-extrabold text-[#101c32]">
+            <span className="text-xl font-extrabold text-[#0F172A] tabular-nums">
               {formatRsd(product.priceRsd)}
             </span>
           </div>
-          <span
-            className={`inline-block rounded px-2 py-0.5 text-[11px] font-semibold ${
-              product.ownStockAvailable
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : product.isOrderable
-                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                : "bg-slate-100 text-slate-600"
-            }`}
-          >
-            {product.availabilityLabel}
+          <span className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+            Garancija 24m
           </span>
         </div>
 

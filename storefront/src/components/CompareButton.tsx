@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CompareProductItem, useCart } from "./CartContext";
+import { IconCheck, IconCompare } from "./Icons";
 
 export function CompareButton({ item }: { item: CompareProductItem }) {
   const { compareItems, toggleCompareItem } = useCart();
@@ -11,14 +12,29 @@ export function CompareButton({ item }: { item: CompareProductItem }) {
     <button
       type="button"
       onClick={() => toggleCompareItem(item)}
-      title="Dodaj u tabelu za upoređivanje specifikacija (maks. 4)"
-      className={`rounded border px-2 py-1 text-[11px] font-semibold transition ${
+      aria-label={
         isSelected
-          ? "border-[#0f807f] bg-teal-50 text-[#0f807f]"
-          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+          ? `Ukloni ${item.name} iz poređenja`
+          : `Dodaj ${item.name} u poređenje specifikacija`
+      }
+      title="Uporedi tehničke specifikacije (maks. 4 uređaja)"
+      className={`cursor-pointer inline-flex items-center gap-1 rounded-lg border px-2.5 py-2.5 text-xs font-bold transition duration-200 ${
+        isSelected
+          ? "border-[#059669] bg-emerald-50 text-[#064E3B]"
+          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
       }`}
     >
-      {isSelected ? "✓ U poređenju" : "+ Uporedi"}
+      {isSelected ? (
+        <>
+          <IconCheck className="h-3.5 w-3.5 text-[#059669]" />
+          <span>U poređenju</span>
+        </>
+      ) : (
+        <>
+          <IconCompare className="h-3.5 w-3.5 text-slate-500" />
+          <span>Uporedi</span>
+        </>
+      )}
     </button>
   );
 }

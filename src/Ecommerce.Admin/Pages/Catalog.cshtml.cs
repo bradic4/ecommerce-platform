@@ -51,10 +51,17 @@ public class CatalogModel(EcommerceDbContext db) : PageModel
             return RedirectToPage();
         }
 
-        if (!string.IsNullOrWhiteSpace(gtinEan) && !SerbianTextNormalizer.IsValidEan(gtinEan))
+        if (!string.IsNullOrWhiteSpace(gtinEan))
         {
-            StatusMessage = "Greška: EAN/GTIN mora sadržati 8 do 14 cifara (bez naučne notacije).";
-            return RedirectToPage();
+            try
+            {
+                SerbianTextNormalizer.NormalizeEan(gtinEan);
+            }
+            catch
+            {
+                StatusMessage = "Greška: EAN/GTIN mora sadržati 8 do 14 cifara (bez naučne notacije).";
+                return RedirectToPage();
+            }
         }
 
         var cleanSlug = SerbianTextNormalizer.NormalizeForSearch(slug).Replace(' ', '-');
@@ -148,10 +155,11 @@ public class CatalogModel(EcommerceDbContext db) : PageModel
         db.PriceRecords.Add(new PriceRecord
         {
             VariantId = variant.Id,
-            PurchaseCostRsd = variant.CurrentCostPriceRsd,
-            SellingPriceRsd = newSellingPriceRsd,
-            AppliedRuleName = "Ručna izmena u Katalogu (ManualOverride)",
-            EffectiveFrom = DateTimeOffset.UtcNow
+            CostSnapshotRsd = variant.CurrentCostPriceRsd,
+            OldSellingPriceRsd = oldPrice,
+            NewSellingPriceRsd = newSellingPriceRsd,
+            RuleDescription = "Ručna izmena u Katalogu (ManualOverride)",
+            ChangedBy = "vlasnik"
         });
 
         db.AuditLogs.Add(new AuditLog
