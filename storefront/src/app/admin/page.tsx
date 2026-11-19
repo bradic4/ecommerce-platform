@@ -551,6 +551,15 @@ export default function OperationalAdminPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href="/NaLageru-Uputstvo-za-Koriscenje.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              download="NaLageru-Uputstvo-za-Koriscenje.pdf"
+              className="rounded-xl border border-slate-400/50 bg-brand-800 px-3.5 py-2 text-xs font-bold text-white hover:border-accent-400 hover:text-accent-400 transition"
+            >
+              📄 Preuzmi PDF uputstvo
+            </a>
             <button
               type="button"
               onClick={handleResetTraining}
