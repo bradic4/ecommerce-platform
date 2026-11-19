@@ -1,3 +1,9 @@
+import {
+  getFallbackCatalogProducts,
+  getFallbackCategories,
+  getFallbackProductBySlug,
+} from "./training-store";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5080";
 
@@ -110,10 +116,12 @@ export interface CheckoutQuoteResponseDto {
 }
 
 export function formatRsd(amount: number): string {
-  return new Intl.NumberFormat("sr-RS", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount) + " RSD";
+  return (
+    new Intl.NumberFormat("sr-RS", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount) + " RSD"
+  );
 }
 
 export async function fetchCategories(): Promise<CategoryDto[]> {
@@ -121,10 +129,11 @@ export async function fetchCategories(): Promise<CategoryDto[]> {
     const res = await fetch(`${API_BASE_URL}/api/v1/catalog/categories`, {
       next: { revalidate: 300, tags: ["catalog", "nav"] },
     });
-    if (!res.ok) return [];
-    return await res.json();
+    if (!res.ok) return getFallbackCategories();
+    const data: CategoryDto[] = await res.json();
+    return data.length > 0 ? data : getFallbackCategories();
   } catch {
-    return [];
+    return getFallbackCategories();
   }
 }
 
@@ -142,8 +151,10 @@ export async function fetchCatalogProducts(params?: {
     if (params?.q) url.searchParams.set("q", params.q);
     if (params?.category) url.searchParams.set("category", params.category);
     if (params?.brand) url.searchParams.set("brand", params.brand);
-    if (params?.minPrice) url.searchParams.set("minPrice", String(params.minPrice));
-    if (params?.maxPrice) url.searchParams.set("maxPrice", String(params.maxPrice));
+    if (params?.minPrice)
+      url.searchParams.set("minPrice", String(params.minPrice));
+    if (params?.maxPrice)
+      url.searchParams.set("maxPrice", String(params.maxPrice));
     if (params?.sort) url.searchParams.set("sort", params.sort);
     if (params?.inStockOnly) url.searchParams.set("inStockOnly", "true");
 
@@ -151,13 +162,12 @@ export async function fetchCatalogProducts(params?: {
     if (params?.category) tags.push(`category:${params.category}`);
 
     const res = await fetch(url.toString(), {
-      // Search & filter queries are dynamic; base catalog uses ISR with tag invalidation (Section 25.6)
       next: params?.q ? { revalidate: 0 } : { revalidate: 300, tags },
     });
-    if (!res.ok) return [];
+    if (!res.ok) return getFallbackCatalogProducts(params);
     return await res.json();
   } catch {
-    return [];
+    return getFallbackCatalogProducts(params);
   }
 }
 
@@ -174,9 +184,9 @@ export async function fetchProductBySlug(
         },
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) return getFallbackProductBySlug(slug);
     return await res.json();
   } catch {
-    return null;
+    return getFallbackProductBySlug(slug);
   }
 }

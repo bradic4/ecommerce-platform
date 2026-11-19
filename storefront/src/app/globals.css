@@ -1,33 +1,81 @@
 @import "tailwindcss";
 
+/*
+ * NaLageru (nalageru.rs) — Sistem dizajn tokena
+ * Primarna struktura: Tamnoplava #172F46 (header, naslovi, primarna dugmad na svetlim karticama).
+ * Akcenat: Signal Limeta #C9F36B (glavna akciona dugmad na tamnoplavom headeru/herou, kontrast 10.8:1 AAA).
+ * Status lagera: Zelena #1B6B45 za sopstveni magacin na belim karticama, brand-plava za centralni lager dobavljača.
+ */
+@theme {
+  --font-heading: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+
+  /* Navy — "brand" skala (#172F46 je brand-700) */
+  --color-brand-50: #eff3f7;
+  --color-brand-100: #dde6ee;
+  --color-brand-200: #bfcedc;
+  --color-brand-300: #93abc1;
+  --color-brand-400: #6485a3;
+  --color-brand-500: #3f6586;
+  --color-brand-600: #284a6b;
+  --color-brand-700: #172f46;
+  --color-brand-800: #0f2133;
+  --color-brand-900: #0a1624;
+  --color-brand-950: #060e17;
+
+  /* Limeta — "accent" skala (#C9F36B je accent-400) */
+  --color-accent-50: #f7fee7;
+  --color-accent-100: #ecfccb;
+  --color-accent-200: #d9f99d;
+  --color-accent-300: #d4f784;
+  --color-accent-400: #c9f36b;
+  --color-accent-500: #b0e048;
+  --color-accent-600: #84b324;
+  --color-accent-700: #5c8015;
+  --color-accent-800: #466113;
+  --color-accent-900: #384e12;
+
+  /* Zelena — status "Naš lager (odmah)" na svetlim površinama */
+  --color-stock-50: #eaf5ef;
+  --color-stock-100: #cfe8da;
+  --color-stock-200: #a3d2ba;
+  --color-stock-300: #6fb896;
+  --color-stock-400: #3e9a74;
+  --color-stock-500: #2a8460;
+  --color-stock-600: #1b6b45;
+  --color-stock-700: #15573a;
+  --color-stock-800: #10442e;
+  --color-stock-900: #0b3222;
+
+  /* Neutrali blago tonirani ka #172F46 */
+  --color-slate-50: #f5f7f9;
+  --color-slate-100: #ebeff3;
+  --color-slate-200: #dce2e9;
+  --color-slate-300: #c3ccd6;
+  --color-slate-400: #8e9baa;
+  --color-slate-500: #5b6b7d;
+  --color-slate-600: #475667;
+  --color-slate-700: #34414f;
+  --color-slate-800: #1f2c3a;
+  --color-slate-900: #121c28;
+  --color-slate-950: #0a121b;
+}
+
 :root {
-  /* Layer 1: Primitive Tokens */
-  --primitive-emerald-700: #047857;
-  --primitive-emerald-600: #059669;
-  --primitive-emerald-950: #064E3B;
-  --primitive-amber-600: #EA580C;
-  --primitive-slate-950: #0F172A;
-  --primitive-slate-100: #F1F5F9;
-  --primitive-slate-50: #F8FAFC;
-  --primitive-white: #FFFFFF;
+  --color-primary: #172f46;
+  --color-primary-dark: #0f2133;
+  --color-accent: #c9f36b;
+  --color-background: #f5f7f9;
+  --color-foreground: #172f46;
+  --color-card: #ffffff;
+  --color-ring: #172f46;
 
-  /* Layer 2: Semantic Tokens (MASTER.md) */
-  --color-primary: var(--primitive-emerald-600);
-  --color-primary-dark: var(--primitive-emerald-700);
-  --color-accent: var(--primitive-amber-600);
-  --color-background: var(--primitive-slate-50);
-  --color-foreground: var(--primitive-slate-950);
-  --color-card: var(--primitive-white);
-  --color-ring: var(--primitive-emerald-600);
-
-  /* Layer 3: Component & Spacing Tokens */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
   --space-xl: 2rem;
-  --shadow-card: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-  --shadow-card-hover: 0 14px 24px -4px rgba(15, 23, 42, 0.1), 0 4px 8px -2px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 2px rgba(23, 47, 70, 0.05), 0 6px 16px -8px rgba(23, 47, 70, 0.14);
+  --shadow-card-hover: 0 2px 4px rgba(23, 47, 70, 0.06), 0 16px 28px -12px rgba(23, 47, 70, 0.22);
 }
 
 html {
@@ -45,19 +93,22 @@ body {
 
 h1, h2, h3, h4, .font-heading {
   font-family: var(--font-heading), system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   text-wrap: balance;
 }
 
-code, pre, .font-mono, .tabular-nums {
-  font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.font-mono, .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Browser Surface Theming (Impeccable Craft Floor) */
+/* Browser Surface Theming */
 ::selection {
-  background-color: #059669;
-  color: #FFFFFF;
+  background-color: #c9f36b;
+  color: #172f46;
 }
 
 :focus-visible {
@@ -71,17 +122,17 @@ code, pre, .font-mono, .tabular-nums {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #ebeff3;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: #8e9baa;
   border-radius: 5px;
-  border: 2px solid #F1F5F9;
+  border: 2px solid #ebeff3;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #475667;
 }
 
 @media (prefers-reduced-motion: reduce) {

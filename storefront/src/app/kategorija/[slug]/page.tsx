@@ -25,14 +25,13 @@ export async function generateMetadata({
     return { title: "Kategorija nije pronađena" };
   }
 
-  // Section 14.1: Parameterized sort/filter URLs point canonical to the clean category URL and set noindex
   const hasFilterParams = Boolean(sp.sort || sp.inStock || sp.maxPrice);
 
   return {
     title: category.seoTitle || category.name,
     description:
       category.seoDescription ||
-      `Pregledajte ponudu u kategoriji ${category.name} uz brzu dostavu i plaćanje pouzećem.`,
+      `Pregledajte ponudu u kategoriji ${category.name} uz jasan status lagera i brzu dostavu.`,
     alternates: {
       canonical: `${SITE_URL}/kategorija/${category.slug}`,
     },
@@ -109,14 +108,14 @@ export default async function CategoryPage({
       />
 
       <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
-        <Link href="/" className="hover:text-[#101c32] hover:underline">
+        <Link href="/" className="hover:text-brand-700 hover:underline">
           Početna
         </Link>{" "}
         / <span className="font-semibold text-slate-800">{category.name}</span>
       </nav>
 
-      <header className="rounded-lg border border-slate-200 bg-white p-6 shadow-xs">
-        <h1 className="text-2xl font-extrabold text-[#101c32]">
+      <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <h1 className="text-2xl font-extrabold text-brand-700">
           {category.name}
         </h1>
         {category.introText && (
@@ -133,9 +132,9 @@ export default async function CategoryPage({
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/kategorija/${slug}`}
-            className={`rounded border px-3 py-1.5 font-semibold ${
+            className={`rounded-lg border px-3 py-1.5 font-semibold ${
               !sp.sort && !sp.maxPrice && !sp.inStock
-                ? "border-[#101c32] bg-[#101c32] text-white"
+                ? "border-brand-700 bg-brand-700 text-white"
                 : "border-slate-300 bg-white text-slate-700"
             }`}
           >
@@ -144,9 +143,9 @@ export default async function CategoryPage({
           <Link
             href={`/kategorija/${slug}?inStock=1`}
             rel="nofollow"
-            className={`rounded border px-3 py-1.5 font-semibold ${
+            className={`rounded-lg border px-3 py-1.5 font-semibold ${
               sp.inStock === "1"
-                ? "border-[#0f807f] bg-[#0f807f] text-white"
+                ? "border-brand-700 bg-brand-50 text-brand-700"
                 : "border-slate-300 bg-white text-slate-700"
             }`}
           >
@@ -155,9 +154,9 @@ export default async function CategoryPage({
           <Link
             href={`/kategorija/${slug}?maxPrice=6000`}
             rel="nofollow"
-            className={`rounded border px-3 py-1.5 font-semibold ${
+            className={`rounded-lg border px-3 py-1.5 font-semibold ${
               sp.maxPrice === "6000"
-                ? "border-[#0f807f] bg-[#0f807f] text-white"
+                ? "border-brand-700 bg-brand-50 text-brand-700"
                 : "border-slate-300 bg-white text-slate-700"
             }`}
           >
@@ -166,9 +165,9 @@ export default async function CategoryPage({
           <Link
             href={`/kategorija/${slug}?sort=price_asc`}
             rel="nofollow"
-            className={`rounded border px-3 py-1.5 font-semibold ${
+            className={`rounded-lg border px-3 py-1.5 font-semibold ${
               sp.sort === "price_asc"
-                ? "border-[#101c32] bg-[#101c32] text-white"
+                ? "border-brand-700 bg-brand-700 text-white"
                 : "border-slate-300 bg-white text-slate-700"
             }`}
           >
@@ -177,9 +176,9 @@ export default async function CategoryPage({
           <Link
             href={`/kategorija/${slug}?sort=price_desc`}
             rel="nofollow"
-            className={`rounded border px-3 py-1.5 font-semibold ${
+            className={`rounded-lg border px-3 py-1.5 font-semibold ${
               sp.sort === "price_desc"
-                ? "border-[#101c32] bg-[#101c32] text-white"
+                ? "border-brand-700 bg-brand-700 text-white"
                 : "border-slate-300 bg-white text-slate-700"
             }`}
           >

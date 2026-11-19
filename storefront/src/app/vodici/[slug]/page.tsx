@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
 import { fetchCatalogProducts, SITE_URL } from "@/lib/api";
 import { STATIC_BUYING_GUIDES } from "@/lib/guides";
+import { STORE_CONFIG } from "@/lib/store-config";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -45,7 +46,7 @@ export default async function BuyingGuideDetailPage({ params }: Props) {
     datePublished: guide.publishedAt,
     author: {
       "@type": "Organization",
-      name: "Alati & Domaćinstvo",
+      name: STORE_CONFIG.brandName,
     },
     mainEntityOfPage: `${SITE_URL}/vodici/${guide.slug}`,
   };
@@ -75,21 +76,21 @@ export default async function BuyingGuideDetailPage({ params }: Props) {
       />
 
       <nav className="mb-4 text-xs text-slate-500">
-        <Link href="/" className="hover:text-[#0f807f]">
+        <Link href="/" className="hover:text-brand-700">
           Početna
         </Link>{" "}
         /{" "}
-        <Link href="/vodici" className="hover:text-[#0f807f]">
+        <Link href="/vodici" className="hover:text-brand-700">
           Vodiči za kupovinu
         </Link>{" "}
         / <span className="font-semibold text-slate-800">{guide.title}</span>
       </nav>
 
-      <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8">
         <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
           <Link
             href={`/kategorija/${guide.categorySlug}`}
-            className="rounded bg-teal-50 px-2.5 py-1 font-bold text-[#0f807f]"
+            className="rounded-md bg-brand-50 px-2.5 py-1 font-bold text-brand-700"
           >
             {guide.categoryName}
           </Link>
@@ -98,18 +99,18 @@ export default async function BuyingGuideDetailPage({ params }: Props) {
           <span>{guide.readingTimeMinutes} min čitanja</span>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-[#101c32] sm:text-3xl leading-tight">
+        <h1 className="text-2xl font-extrabold text-brand-700 sm:text-3xl leading-tight">
           {guide.title}
         </h1>
 
-        <p className="mt-3 text-base text-slate-600 leading-relaxed border-l-4 border-[#0f807f] pl-4">
+        <p className="mt-3 text-base text-slate-600 leading-relaxed border-l-4 border-brand-700 pl-4">
           {guide.excerpt}
         </p>
 
         <div className="mt-6 space-y-6">
           {guide.sections.map((sec, idx) => (
             <section key={idx}>
-              <h2 className="text-lg font-bold text-[#101c32] mb-2">
+              <h2 className="text-lg font-bold text-brand-700 mb-2">
                 {sec.heading}
               </h2>
               <p className="text-sm text-slate-700 leading-relaxed">
@@ -121,16 +122,16 @@ export default async function BuyingGuideDetailPage({ params }: Props) {
 
         {guide.faqs.length > 0 && (
           <div className="mt-8 border-t border-slate-200 pt-6">
-            <h2 className="text-lg font-bold text-[#101c32] mb-4">
+            <h2 className="text-lg font-bold text-brand-700 mb-4">
               Često postavljana pitanja (FAQ)
             </h2>
             <div className="space-y-4">
               {guide.faqs.map((faq, idx) => (
                 <div
                   key={idx}
-                  className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                 >
-                  <h3 className="text-sm font-bold text-[#101c32]">
+                  <h3 className="text-sm font-bold text-brand-700">
                     {faq.question}
                   </h3>
                   <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">
@@ -146,12 +147,12 @@ export default async function BuyingGuideDetailPage({ params }: Props) {
       {relatedProducts.length > 0 && (
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-extrabold text-[#101c32]">
+            <h2 className="text-lg font-extrabold text-brand-700">
               Preporučeni proizvodi iz ovog vodiča
             </h2>
             <Link
               href={`/kategorija/${guide.categorySlug}`}
-              className="text-xs font-bold text-[#0f807f] hover:underline"
+              className="text-xs font-bold text-brand-700 hover:underline"
             >
               Pogledaj celu kategoriju &rarr;
             </Link>

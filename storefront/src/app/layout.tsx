@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Nunito_Sans, Rubik } from "next/font/google";
+import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import React, { Suspense } from "react";
 import "./globals.css";
 import { CartProvider } from "@/components/CartContext";
@@ -8,35 +8,27 @@ import { Header } from "@/components/Header";
 import { SITE_URL } from "@/lib/api";
 import { STORE_CONFIG } from "@/lib/store-config";
 
-const rubik = Rubik({
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-heading",
-  display: "swap",
-});
-
-const nunitoSans = Nunito_Sans({
-  subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["400", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
+const display = Bricolage_Grotesque({
   subsets: ["latin", "latin-ext"],
-  weight: ["500", "700"],
-  variable: "--font-mono",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const body = Figtree({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${STORE_CONFIG.brandName} | Specijalizovana Prodavnica Alata i Opreme`,
+    default: `${STORE_CONFIG.brandName} | ${STORE_CONFIG.metaTitleSuffix}`,
     template: `%s | ${STORE_CONFIG.brandName}`,
   },
-  description:
-    "Provereni aku i električni alati, aparati za varenje i oprema za dvorište. Tačno stanje lagera, isporuka 24-48h i plaćanje pouzećem ili NBS IPS QR kodom.",
+  description: STORE_CONFIG.metaDescription,
   alternates: {
     canonical: "/",
   },
@@ -48,13 +40,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="sr"
-      className={`${rubik.variable} ${nunitoSans.variable} ${jetbrainsMono.variable}`}
-    >
+    <html lang="sr" className={`${display.variable} ${body.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
         <CartProvider>
-          <Suspense fallback={<div className="h-24 bg-[#0F172A]" />}>
+          <Suspense fallback={<div className="h-24 bg-brand-700" />}>
             <Header />
           </Suspense>
 

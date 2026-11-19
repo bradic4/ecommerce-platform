@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import React from "react";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import {
-  IconCheck,
   IconChevronRight,
   IconShield,
   IconTruck,
 } from "@/components/Icons";
 import { ProductReviewsSection } from "@/components/ProductReviewsSection";
 import { ProductInteractiveGallery } from "@/components/ProductVisual";
+import { StockMeter } from "@/components/StockMeter";
 import { fetchProductBySlug, formatRsd, SITE_URL } from "@/lib/api";
 import { STORE_CONFIG } from "@/lib/store-config";
 
@@ -58,7 +58,6 @@ export default async function ProductDetailPage({
 
   const primaryVariant = product.variants[0];
 
-  // 100/100 seo-ecommerce Google Merchant Center Product Schema (includes shippingDetails + hasMerchantReturnPolicy + aggregateRating + review)
   const productJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -194,7 +193,7 @@ export default async function ProductDetailPage({
       />
 
       <nav aria-label="Putanja stranice" className="text-xs text-slate-500">
-        <Link href="/" className="hover:text-[#0F172A] hover:underline">
+        <Link href="/" className="hover:text-brand-700 hover:underline">
           Početna
         </Link>
         {product.category && (
@@ -203,7 +202,7 @@ export default async function ProductDetailPage({
             /{" "}
             <Link
               href={`/kategorija/${product.category.slug}`}
-              className="hover:text-[#0F172A] hover:underline"
+              className="hover:text-brand-700 hover:underline"
             >
               {product.category.name}
             </Link>
@@ -226,61 +225,55 @@ export default async function ProductDetailPage({
           <dl className="mt-5 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs">
             <div className="flex justify-between">
               <dt className="text-slate-500">Interna šifra (SKU):</dt>
-              <dd className="font-mono font-bold text-[#0F172A] tabular-nums">
+              <dd className="font-mono font-bold text-brand-700 tabular-nums">
                 {primaryVariant.internalSku}
               </dd>
             </div>
             {primaryVariant.gtinEan && (
               <div className="flex justify-between">
                 <dt className="text-slate-500">EAN / GTIN barkod:</dt>
-                <dd className="font-mono text-[#0F172A] tabular-nums">
+                <dd className="font-mono text-brand-700 tabular-nums">
                   {primaryVariant.gtinEan}
                 </dd>
               </div>
             )}
             <div className="flex justify-between">
               <dt className="text-slate-500">Zakonska saobraznost:</dt>
-              <dd className="font-bold text-[#064E3B]">24 meseca uz fiskalni račun</dd>
+              <dd className="font-bold text-stock-700">
+                24 meseca uz fiskalni račun
+              </dd>
             </div>
           </dl>
         </div>
 
-        {/* Right: Main Offer, Specs & Purchase Controls */}
+        {/* Right: Main Offer, StockMeter, Specs & Purchase Controls */}
         <div className="flex flex-col justify-between md:col-span-7">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#0F172A] md:text-3xl leading-tight">
+            <h1 className="text-2xl font-extrabold text-brand-700 md:text-3xl leading-tight">
               {product.name}
             </h1>
 
-            <div className="mt-3.5 flex flex-wrap items-center gap-3">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold ${
-                  primaryVariant.ownStockAvailable
-                    ? "bg-emerald-50 text-[#064E3B] border border-emerald-200"
-                    : primaryVariant.isOrderable
-                    ? "bg-amber-50 text-amber-900 border border-amber-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                }`}
-              >
-                <IconCheck className="h-3.5 w-3.5" />
-                <span>{primaryVariant.publicStatusLabel}</span>
-              </span>
-              <span className="text-xs text-slate-500">
-                Model: <strong>{primaryVariant.title}</strong>
-              </span>
+            <div className="mt-4">
+              <StockMeter
+                ownStockAvailable={primaryVariant.ownStockAvailable}
+                isOrderable={primaryVariant.isOrderable}
+                statusLabel={primaryVariant.publicStatusLabel}
+              />
             </div>
 
-            <div className="mt-5 rounded-xl bg-slate-50 p-5 border border-slate-200">
+            <div className="mt-4 rounded-xl bg-slate-50 p-5 border border-slate-200">
               <span className="block text-xs font-medium text-slate-500">
                 Maloprodajna cena sa PDV-om:
               </span>
-              <div className="mt-1 text-3xl font-extrabold text-[#0F172A] tabular-nums">
+              <div className="mt-1 text-3xl font-extrabold text-brand-700 tabular-nums">
                 {formatRsd(primaryVariant.priceRsd)}
               </div>
               <p className="mt-1.5 text-xs text-slate-600">
-                {primaryVariant.priceRsd >= STORE_CONFIG.freeShippingThresholdRsd ? (
-                  <strong className="text-[#059669]">
-                    Ovaj proizvod ostvaruje besplatnu dostavu (0 RSD) na teritoriji Srbije.
+                {primaryVariant.priceRsd >=
+                STORE_CONFIG.freeShippingThresholdRsd ? (
+                  <strong className="text-stock-600">
+                    Ovaj proizvod ostvaruje besplatnu dostavu (0 RSD) na
+                    teritoriji Srbije.
                   </strong>
                 ) : (
                   <>
@@ -299,7 +292,7 @@ export default async function ProductDetailPage({
             </div>
 
             <div className="mt-6">
-              <h2 className="text-base font-extrabold text-[#0F172A]">
+              <h2 className="text-base font-extrabold text-brand-700">
                 Tehničke specifikacije i opis uređaja
               </h2>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
@@ -311,7 +304,7 @@ export default async function ProductDetailPage({
                   <table className="w-full text-left text-xs">
                     <tbody className="divide-y divide-slate-200">
                       {product.shortSpecification
-                        .split("|")
+                        .split(/[|•]/)
                         .map((part) => part.trim())
                         .filter(Boolean)
                         .map((spec, idx) => {
@@ -323,7 +316,7 @@ export default async function ProductDetailPage({
                               <th className="w-2/5 px-3.5 py-2.5 font-semibold text-slate-600">
                                 {k.trim()}
                               </th>
-                              <td className="px-3.5 py-2.5 font-bold text-[#0F172A]">
+                              <td className="px-3.5 py-2.5 font-bold text-brand-700">
                                 {v.trim()}
                               </td>
                             </tr>
@@ -348,24 +341,26 @@ export default async function ProductDetailPage({
               />
               <Link
                 href="/checkout"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-[#0F172A] hover:bg-slate-100 transition"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-brand-700 hover:bg-slate-100 transition"
               >
                 <span>Završi kupovinu</span>
                 <IconChevronRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="grid gap-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 p-3.5 text-xs text-[#064E3B] sm:grid-cols-2">
+            <div className="grid gap-3 rounded-xl bg-brand-50/60 border border-brand-100 p-3.5 text-xs text-brand-800 sm:grid-cols-2">
               <div className="flex items-start gap-2">
-                <IconTruck className="h-4 w-4 shrink-0 text-[#059669] mt-0.5" />
+                <IconTruck className="h-4 w-4 shrink-0 text-brand-700 mt-0.5" />
                 <span>
-                  <strong>Plaćanje pouzećem ili IPS QR:</strong> platite kuriru tek pri preuzimanju paketa.
+                  <strong>Plaćanje pouzećem ili IPS QR:</strong> platite kuriru
+                  tek pri preuzimanju paketa.
                 </span>
               </div>
               <div className="flex items-start gap-2">
-                <IconShield className="h-4 w-4 shrink-0 text-[#059669] mt-0.5" />
+                <IconShield className="h-4 w-4 shrink-0 text-brand-700 mt-0.5" />
                 <span>
-                  <strong>14 dana pravo na odustanak:</strong> povrat robe bez navođenja razloga.
+                  <strong>14 dana pravo na odustanak:</strong> povrat robe bez
+                  navođenja razloga.
                 </span>
               </div>
             </div>
@@ -383,7 +378,7 @@ export default async function ProductDetailPage({
       <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-between border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur md:hidden">
         <div>
           <div className="text-[11px] text-slate-500">Cena sa PDV-om:</div>
-          <div className="text-base font-extrabold text-[#0F172A] tabular-nums">
+          <div className="text-base font-extrabold text-brand-700 tabular-nums">
             {formatRsd(primaryVariant.priceRsd)}
           </div>
         </div>

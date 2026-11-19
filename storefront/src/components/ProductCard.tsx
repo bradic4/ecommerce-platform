@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: CatalogProductItemDto }) {
 
   return (
     <article
-      className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition duration-200 hover:border-emerald-500/40"
+      className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition duration-200 hover:border-brand-500/40"
       style={{ boxShadow: "var(--shadow-card)" }}
     >
       <div>
@@ -27,7 +27,9 @@ export function ProductCard({ product }: { product: CatalogProductItemDto }) {
             name={product.name}
             sku={product.sku}
             brandName={product.brandName}
+            shortSpec={product.shortSpecification}
             ownStockAvailable={product.ownStockAvailable}
+            isOrderable={product.isOrderable}
             size="card"
           />
         </Link>
@@ -36,22 +38,19 @@ export function ProductCard({ product }: { product: CatalogProductItemDto }) {
           {product.categorySlug ? (
             <Link
               href={`/kategorija/${product.categorySlug}`}
-              className="font-semibold text-[#059669] hover:underline"
+              className="font-semibold text-brand-700 hover:underline"
             >
               {product.categoryName}
             </Link>
           ) : (
             <span className="text-slate-500">Katalog</span>
           )}
-          <span className="text-slate-500 font-medium">
-            {product.availabilityLabel}
-          </span>
         </div>
 
-        <h3 className="mt-1.5 text-base font-bold leading-snug text-[#0F172A]">
+        <h3 className="mt-1 text-base font-bold leading-snug text-brand-700">
           <Link
             href={`/proizvod/${product.slug}`}
-            className="hover:text-[#059669] transition"
+            className="hover:text-brand-600 transition"
           >
             {product.name}
           </Link>
@@ -77,7 +76,7 @@ export function ProductCard({ product }: { product: CatalogProductItemDto }) {
             <span className="block text-[11px] font-medium text-slate-500">
               Cena sa uračunatim PDV-om
             </span>
-            <span className="text-xl font-extrabold text-[#0F172A] tabular-nums">
+            <span className="text-xl font-extrabold text-brand-700 tabular-nums">
               {formatRsd(product.priceRsd)}
             </span>
           </div>

@@ -54,18 +54,18 @@ export function AddToCartButton({
         fullWidth ? "w-full" : ""
       } cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold text-white shadow-xs transition duration-200 ${
         added
-          ? "bg-[#059669]"
-          : "bg-[#EA580C] hover:bg-[#D97706] active:translate-y-0"
+          ? "bg-stock-600"
+          : "bg-brand-700 hover:bg-brand-800 active:translate-y-0"
       }`}
     >
       {added ? (
         <>
-          <IconCheck className="h-4 w-4" />
+          <IconCheck className="h-4 w-4 text-accent-400" />
           <span>Dodato u korpu</span>
         </>
       ) : (
         <>
-          <IconCart className="h-4 w-4" />
+          <IconCart className="h-4 w-4 text-accent-400" />
           <span>Dodaj u korpu</span>
         </>
       )}

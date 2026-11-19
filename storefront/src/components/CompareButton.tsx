@@ -20,13 +20,13 @@ export function CompareButton({ item }: { item: CompareProductItem }) {
       title="Uporedi tehničke specifikacije (maks. 4 uređaja)"
       className={`cursor-pointer inline-flex items-center gap-1 rounded-lg border px-2.5 py-2.5 text-xs font-bold transition duration-200 ${
         isSelected
-          ? "border-[#059669] bg-emerald-50 text-[#064E3B]"
-          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+          ? "border-brand-700 bg-brand-50 text-brand-700"
+          : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-slate-50"
       }`}
     >
       {isSelected ? (
         <>
-          <IconCheck className="h-3.5 w-3.5 text-[#059669]" />
+          <IconCheck className="h-3.5 w-3.5 text-brand-700" />
           <span>U poređenju</span>
         </>
       ) : (

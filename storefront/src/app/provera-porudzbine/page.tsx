@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { API_BASE_URL, formatRsd } from "@/lib/api";
+import { loadTrainingDb } from "@/lib/training-store";
 
 interface OrderLookupResult {
   orderNumber: string;
@@ -42,35 +43,83 @@ export default function OrderLookupPage() {
       const res = await fetch(
         `${API_BASE_URL}/api/v1/orders/lookup?orderNumber=${encodeURIComponent(clean)}`
       );
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.message || "Porudžbina sa unetim brojem nije pronađena.");
-      } else {
+      if (res.ok) {
+        const data = await res.json();
         setResult(data);
+        setLoading(false);
+        return;
       }
     } catch {
-      setError("Provera trenutno nije dostupna. Pokušajte ponovo.");
-    } finally {
-      setLoading(false);
+      // Fallback to local training database
     }
+
+    const db = loadTrainingDb();
+    const found = db.orders.find(
+      (o) => o.orderNumber.toUpperCase() === clean.toUpperCase()
+    );
+    if (found) {
+      setResult({
+        orderNumber: found.orderNumber,
+        publicStatus:
+          found.status === "PendingConfirmation"
+            ? "Primljena — čeka potvrdu operatera"
+            : found.status === "Confirmed"
+              ? "Potvrđena — u pripremi za slanje"
+              : found.status === "Dispatched"
+                ? `Poslato (${found.courierName || "Kurir"}: ${found.trackingNumber || ""})`
+                : found.status === "DeliveredPaid"
+                  ? "Isporučeno i naplaćeno"
+                  : found.status,
+        paymentMethod:
+          found.paymentMethod === "IpsQr"
+            ? "Uplata na račun (NBS IPS QR)"
+            : "Plaćanje pouzećem (gotovina kuriru)",
+        subtotalRsd: found.subtotalRsd,
+        shippingCostRsd: found.shippingRsd,
+        totalRsd: found.totalRsd,
+        currency: "RSD",
+        createdAt: found.createdAt,
+        shippingCity: found.city,
+        items: found.items.map((i) => ({
+          productNameSnapshot: i.productName,
+          skuSnapshot: i.sku,
+          quantity: i.quantity,
+          unitPriceRsd: i.unitPriceRsd,
+          lineTotalRsd: i.lineTotalRsd,
+        })),
+      });
+    } else {
+      setError(
+        "Porudžbina sa unetim brojem nije pronađena (probajte npr. ORD-20261119-001)."
+      );
+    }
+    setLoading(false);
   };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <nav className="mb-4 text-xs text-slate-500">
-        <Link href="/" className="hover:text-[#0f807f]">
+        <Link href="/" className="hover:text-brand-700">
           Početna
         </Link>{" "}
-        / <span className="font-semibold text-slate-800">Status porudžbine</span>
+        /{" "}
+        <span className="font-semibold text-slate-800">Status porudžbine</span>
       </nav>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-extrabold text-[#101c32] sm:text-2xl">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <h1 className="text-xl font-extrabold text-brand-700 sm:text-2xl">
           Provera statusa porudžbine (bez registracije)
         </h1>
         <p className="mt-1 text-xs text-slate-600">
           Unesite broj porudžbine koji ste dobili nakon potvrde kupovine (npr.{" "}
-          <code>ORD-20261113-123456</code>).
+          <code className="font-mono font-bold text-brand-700">
+            ORD-20261119-001
+          </code>{" "}
+          ili{" "}
+          <code className="font-mono font-bold text-brand-700">
+            ORD-20261118-019
+          </code>
+          ).
         </p>
 
         <form onSubmit={handleLookup} className="mt-4 flex flex-wrap gap-2">
@@ -79,13 +128,13 @@ export default function OrderLookupPage() {
             required
             value={orderNumber}
             onChange={(e) => setOrderNumber(e.target.value)}
-            placeholder="ORD-2026..."
-            className="flex-1 rounded-md border border-slate-300 px-3.5 py-2 text-sm focus:border-[#0f807f] focus:outline-none"
+            placeholder="ORD-20261119-001"
+            className="flex-1 rounded-lg border border-slate-300 px-3.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
           />
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-[#101c32] px-5 py-2 text-sm font-bold text-white hover:bg-[#1d2f52] transition disabled:opacity-50"
+            className="cursor-pointer rounded-lg bg-brand-700 px-5 py-2 text-sm font-bold text-white hover:bg-brand-600 transition disabled:opacity-50"
           >
             {loading ? "Provera..." : "Proveri status"}
           </button>
@@ -98,15 +147,15 @@ export default function OrderLookupPage() {
         )}
 
         {result && (
-          <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-5">
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
               <div>
                 <span className="text-xs text-slate-500">Broj porudžbine:</span>
-                <div className="text-base font-extrabold text-[#101c32]">
+                <div className="text-base font-extrabold text-brand-700 font-mono">
                   {result.orderNumber}
                 </div>
               </div>
-              <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-900">
+              <span className="rounded-full bg-stock-50 px-3 py-1 text-xs font-bold text-stock-700 border border-stock-100">
                 {result.publicStatus}
               </span>
             </div>
@@ -127,18 +176,18 @@ export default function OrderLookupPage() {
                   className="flex items-center justify-between text-xs"
                 >
                   <span>
-                    <strong>{item.quantity}x</strong> {item.productNameSnapshot}{" "}
+                    <strong>{item.quantity}×</strong> {item.productNameSnapshot}{" "}
                     <span className="text-slate-400">({item.skuSnapshot})</span>
                   </span>
-                  <span className="font-bold text-slate-800">
+                  <span className="font-bold text-brand-700 tabular-nums">
                     {formatRsd(item.lineTotalRsd)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-3 flex justify-between border-t border-slate-200 pt-3 text-sm font-extrabold text-[#101c32]">
-              <span>Ukupno za naplatu pouzećem:</span>
+            <div className="mt-3 flex justify-between border-t border-slate-200 pt-3 text-sm font-extrabold text-brand-700 tabular-nums">
+              <span>Ukupno za naplatu:</span>
               <span>{formatRsd(result.totalRsd)}</span>
             </div>
           </div>

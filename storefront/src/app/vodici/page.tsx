@@ -4,9 +4,9 @@ import { SITE_URL } from "@/lib/api";
 import { STATIC_BUYING_GUIDES } from "@/lib/guides";
 
 export const metadata: Metadata = {
-  title: "Vodiči za kupovinu i stručni saveti | Alati & Domaćinstvo",
+  title: "Vodiči za kupovinu i stručni saveti | NaLageru.rs",
   description:
-    "Praktični tehnički vodiči za izbor električnog i akumulatorskog alata, aparata za varenje i opreme za održavanje dvorišta.",
+    "Praktični tehnički vodiči za izbor elektronike, računarske opreme, akumulatorskog alata i opreme za domaćinstvo.",
   alternates: {
     canonical: `${SITE_URL}/vodici`,
   },
@@ -40,23 +40,24 @@ export default function BuyingGuidesHubPage() {
       />
 
       <nav className="mb-4 text-xs text-slate-500">
-        <Link href="/" className="hover:text-[#0f807f]">
+        <Link href="/" className="hover:text-brand-700">
           Početna
         </Link>{" "}
-        / <span className="font-semibold text-slate-800">Vodiči za kupovinu</span>
+        /{" "}
+        <span className="font-semibold text-slate-800">Vodiči za kupovinu</span>
       </nav>
 
-      <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <span className="inline-block rounded bg-teal-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-[#0f807f]">
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <span className="inline-block rounded-md bg-brand-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-brand-700">
           Baza znanja i stručni saveti
         </span>
-        <h1 className="mt-2 text-2xl font-extrabold text-[#101c32] sm:text-3xl">
-          Vodiči za izbor alata i opreme za domaćinstvo
+        <h1 className="mt-2 text-2xl font-extrabold text-brand-700 sm:text-3xl">
+          Vodiči za izbor tehnike, alata i opreme
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-slate-600 leading-relaxed">
           Pre kupovine proverite realne tehničke parametre: obrtni moment (Nm),
-          radni ciklus (intermitenciju), tip motora i savete za održavanje kako
-          biste odabrali uređaj koji zaista odgovara vašem poslu.
+          radni ciklus (intermitenciju), snagu napajanja i savete za održavanje
+          kako biste odabrali uređaj koji zaista odgovara vašem poslu.
         </p>
       </div>
 
@@ -64,23 +65,23 @@ export default function BuyingGuidesHubPage() {
         {STATIC_BUYING_GUIDES.map((guide) => (
           <article
             key={guide.slug}
-            className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-600/40 hover:shadow-md"
+            className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-brand-500 hover:shadow-md"
           >
             <div>
               <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
                 <Link
                   href={`/kategorija/${guide.categorySlug}`}
-                  className="font-semibold text-[#0f807f] hover:underline"
+                  className="font-semibold text-brand-700 hover:underline"
                 >
                   {guide.categoryName}
                 </Link>
                 <span>{guide.readingTimeMinutes} min čitanja</span>
               </div>
 
-              <h2 className="mb-2 text-lg font-bold text-[#101c32] leading-snug">
+              <h2 className="mb-2 text-lg font-bold text-brand-700 leading-snug">
                 <Link
                   href={`/vodici/${guide.slug}`}
-                  className="hover:text-[#0f807f] transition"
+                  className="hover:text-brand-500 transition"
                 >
                   {guide.title}
                 </Link>
@@ -97,7 +98,7 @@ export default function BuyingGuidesHubPage() {
               </span>
               <Link
                 href={`/vodici/${guide.slug}`}
-                className="text-xs font-bold text-[#101c32] hover:text-[#0f807f]"
+                className="text-xs font-bold text-brand-700 hover:text-brand-500"
               >
                 Pročitaj vodič &rarr;
               </Link>
